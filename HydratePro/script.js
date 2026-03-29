@@ -1,3 +1,9 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+
+const supabaseUrl = 'https://0ec90b57d6e95fcbda19832f.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJib2x0IiwicmVmIjoiMGVjOTBiNTdkNmU5NWZjYmRhMTk4MzJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4ODE1NzQsImV4cCI6MTc1ODg4MTU3NH0.9I8-U0x86Ak8t2DGaIk0HfvTSLsAyzdnz-Nw00mMkKw';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 let totalWater = parseInt(localStorage.getItem('totalWater')) || 0;
 let goal = 3500;
 let baseGoal = 3000;
@@ -5,17 +11,20 @@ let currentTemp = null;
 let isExtremeHeat = false;
 let userName = '';
 let userCity = '';
+let currentUser = null;
 
-window.onload = function() {
-    const setupComplete = localStorage.getItem('setupComplete');
-    if (!setupComplete) {
-        document.getElementById('setup-screen').classList.add('active');
-    } else {
+window.onload = async function() {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+        currentUser = session.user;
         initializeApp();
+    } else {
+        document.getElementById('setup-screen').classList.add('active');
     }
 };
 
-function completeSetup() {
+async function completeSetup() {
     const name = document.getElementById('setup-name').value.trim();
     const age = parseInt(document.getElementById('setup-age').value);
     const city = document.getElementById('setup-city').value.trim();
@@ -25,18 +34,72 @@ function completeSetup() {
         return;
     }
 
-    localStorage.setItem('userName', name);
-    localStorage.setItem('userAge', age);
-    localStorage.setItem('userCity', city);
-    localStorage.setItem('setupComplete', 'true');
+    try {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+            email: `${name.toLowerCase().replace(/\s+/g, '.')}.${Date.now()}@hydratepro.local`,
+            password: Math.random().toString(36).slice(-12)
+        });
 
-    document.getElementById('setup-screen').classList.remove('active');
-    initializeApp();
+        if (signUpError) throw signUpError;
+        if (!data.user) throw new Error('Signup failed');
+
+        const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+                id: data.user.id,
+                name: name,
+                age: age,
+                city: city
+            });
+
+        if (profileError) throw profileError;
+
+        currentUser = data.user;
+        localStorage.setItem('userName', name);
+        localStorage.setItem('userAge', age);
+        localStorage.setItem('userCity', city);
+
+        document.getElementById('setup-screen').classList.remove('active');
+        initializeApp();
+    } catch (error) {
+        console.error('Setup error:', error);
+        alert('Setup failed. Please try again.');
+    }
+}
+
+async function signInWithGoogle() {
+    try {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.href
+            }
+        });
+        if (error) throw error;
+    } catch (error) {
+        console.error('Google sign-in error:', error);
+        alert('Google sign-in failed. Please try again.');
+    }
+}
+
+async function signInWithMicrosoft() {
+    try {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'azure',
+            options: {
+                redirectTo: window.location.href
+            }
+        });
+        if (error) throw error;
+    } catch (error) {
+        console.error('Microsoft sign-in error:', error);
+        alert('Microsoft sign-in failed. Please try again.');
+    }
 }
 
 function initializeApp() {
-    userName = localStorage.getItem('userName') || '';
-    userCity = localStorage.getItem('userCity') || '';
+    userName = localStorage.getItem('userName') || currentUser?.user_metadata?.full_name || 'User';
+    userCity = localStorage.getItem('userCity') || 'Unknown';
     const userAge = parseInt(localStorage.getItem('userAge')) || 18;
 
     baseGoal = userAge < 14 ? 2100 : 3000;

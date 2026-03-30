@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
-const supabaseUrl = 'https://0ec90b57d6e95fcbda19832f.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJib2x0IiwicmVmIjoiMGVjOTBiNTdkNmU5NWZjYmRhMTk4MzJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4ODE1NzQsImV4cCI6MTc1ODg4MTU3NH0.9I8-U0x86Ak8t2DGaIk0HfvTSLsAyzdnz-Nw00mMkKw';
+const supabaseUrl = 'https://lfkmjyqjsnmdjzfcpizs.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxma21qeXFqc25tZGp6ZmNwaXpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NzQyNDMsImV4cCI6MjA5MDM1MDI0M30.6sb3v_mOMciQbmTmHgmsjWyewng-eKxPQgiY4QchKAI';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 let totalWater = parseInt(localStorage.getItem('totalWater')) || 0;

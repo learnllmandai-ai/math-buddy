@@ -4,10 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Varsid Hub | Dashboard</title>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/neon/96/00d4ff/circuit.png">
     <style>
         :root { --primary: #00d4ff; --bg: #05070a; --card-bg: rgba(22, 27, 34, 0.8); --text: #ffffff; }
         body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
         #particles-js { position: fixed; width: 100%; height: 100%; z-index: -1; }
+        .main-hub-btn { position: fixed; top: 20px; left: 20px; background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); color: var(--primary); padding: 10px 18px; border-radius: 12px; text-decoration: none; font-weight: bold; backdrop-filter: blur(10px); z-index: 1000; transition: 0.3s; }
+        .main-hub-btn:hover { background: var(--primary); color: black; }
         .logout-btn { position: fixed; top: 20px; right: 20px; background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255, 77, 77, 0.3); color: #ff4d4d; padding: 10px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; backdrop-filter: blur(10px); z-index: 1000; transition: 0.3s; }
         .logout-btn:hover { background: #ff4d4d; color: white; }
         .container { width: 90%; max-width: 800px; padding: 60px 0; z-index: 1; }
@@ -30,6 +33,7 @@
 </head>
 <body>
     <div id="particles-js"></div>
+    <a href="../HydratePro/index.html" class="main-hub-btn">← Main Hub</a>
     <button class="logout-btn" onclick="logout()">Logout ⏻</button>
     <div class="container">
         <div class="user-greeting">
@@ -56,9 +60,10 @@
         window.onload = function() {
             const user = localStorage.getItem('currentUser');
             const dob = localStorage.getItem('currentDOB');
+            const realName = localStorage.getItem('userName') || user;
             if (!localStorage.getItem('isLoggedIn') && !user) { window.location.href = "../index.html"; return; }
-            if (user) { 
-                document.querySelector('#display-name span').innerText = user;
+            if (realName) {
+                document.querySelector('#display-name span').innerText = realName;
                 const today = new Date();
                 const bday = new Date(dob);
                 if (today.getMonth() === bday.getMonth() && today.getDate() === bday.getDate()) {

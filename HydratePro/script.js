@@ -35,24 +35,21 @@ async function completeSetup() {
     }
 
     try {
+        const uniqueEmail = `user.${Date.now()}@hydratepro.app`;
         const { data, error: signUpError } = await supabase.auth.signUp({
-            email: `${name.toLowerCase().replace(/\s+/g, '.')}.${Date.now()}@hydratepro.local`,
-            password: Math.random().toString(36).slice(-12)
+            email: uniqueEmail,
+            password: Math.random().toString(36).slice(-12),
+            options: {
+                data: {
+                    name: name,
+                    age: age,
+                    city: city
+                }
+            }
         });
 
         if (signUpError) throw signUpError;
         if (!data.user) throw new Error('Signup failed');
-
-        const { error: profileError } = await supabase
-            .from('user_profiles')
-            .insert({
-                id: data.user.id,
-                name: name,
-                age: age,
-                city: city
-            });
-
-        if (profileError) throw profileError;
 
         currentUser = data.user;
         localStorage.setItem('userName', name);

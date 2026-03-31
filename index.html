@@ -29,8 +29,26 @@
         <div class="toggle-text">
             <p id="toggle-msg">Don't have an account? <span onclick="toggleMode()">Create Account</span></p>
         </div>
+        <div id="forgot-password-link" class="forgot-password-link">
+            <span onclick="showForgotPassword()">Forgot password?</span>
+        </div>
         <div id="error-msg" class="error"></div>
     </div>
+
+    <div id="forgot-modal" class="modal hidden">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeForgotPassword()">✕</button>
+            <h2>Reset Your Password</h2>
+            <p class="modal-subtitle">Enter your username to reset your password</p>
+            <div class="input-group">
+                <input type="text" id="reset-username" placeholder="Username" required>
+                <input type="email" id="reset-email" placeholder="Email or security answer" required>
+            </div>
+            <button class="reset-btn" onclick="handlePasswordReset()">Send Reset Link</button>
+            <div id="reset-msg" class="error"></div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

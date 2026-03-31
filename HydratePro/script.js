@@ -30,9 +30,19 @@ async function completeSetup() {
     const city = document.getElementById('setup-city').value.trim();
 
     if (!name || !age || !city) {
-        alert('Please fill in all fields');
+        showSetupError('Please fill in all fields');
         return;
     }
+
+    if (age < 1 || age > 120) {
+        showSetupError('Age must be between 1 and 120');
+        return;
+    }
+
+    const setupSubmit = document.querySelector('.setup-submit');
+    const originalText = setupSubmit.innerText;
+    setupSubmit.innerText = 'Setting up...';
+    setupSubmit.disabled = true;
 
     try {
         const uniqueEmail = `user.${Date.now()}@hydratepro.app`;
@@ -49,7 +59,7 @@ async function completeSetup() {
         });
 
         if (signUpError) throw signUpError;
-        if (!data.user) throw new Error('Signup failed');
+        if (!data.user) throw new Error('Signup failed - no user returned');
 
         currentUser = data.user;
         localStorage.setItem('userName', name);
@@ -60,12 +70,33 @@ async function completeSetup() {
         initializeApp();
     } catch (error) {
         console.error('Setup error:', error);
-        alert('Setup failed. Please try again.');
+        const errorMessage = error.message || 'Setup failed. Please try again.';
+        showSetupError(errorMessage);
+        setupSubmit.innerText = originalText;
+        setupSubmit.disabled = false;
     }
+}
+
+function showSetupError(message) {
+    const container = document.querySelector('.setup-container');
+    let errorMsg = container.querySelector('.setup-error');
+    if (!errorMsg) {
+        errorMsg = document.createElement('div');
+        errorMsg.className = 'setup-error';
+        errorMsg.style.cssText = 'color: #ff4d4d; font-size: 0.85rem; margin-bottom: 15px; padding: 10px; background: rgba(255, 77, 77, 0.1); border-radius: 8px; border: 1px solid rgba(255, 77, 77, 0.3);';
+        container.insertBefore(errorMsg, container.querySelector('.setup-input'));
+    }
+    errorMsg.innerText = message;
 }
 
 async function signInWithGoogle() {
     try {
+        const button = event?.target;
+        if (button) {
+            button.disabled = true;
+            button.style.opacity = '0.6';
+        }
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
@@ -75,12 +106,22 @@ async function signInWithGoogle() {
         if (error) throw error;
     } catch (error) {
         console.error('Google sign-in error:', error);
-        alert('Google sign-in failed. Please try again.');
+        showSetupError('Google sign-in failed. Please check your connection and try again.');
+        if (event?.target) {
+            event.target.disabled = false;
+            event.target.style.opacity = '1';
+        }
     }
 }
 
 async function signInWithMicrosoft() {
     try {
+        const button = event?.target;
+        if (button) {
+            button.disabled = true;
+            button.style.opacity = '0.6';
+        }
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'azure',
             options: {
@@ -90,7 +131,11 @@ async function signInWithMicrosoft() {
         if (error) throw error;
     } catch (error) {
         console.error('Microsoft sign-in error:', error);
-        alert('Microsoft sign-in failed. Please try again.');
+        showSetupError('Microsoft sign-in failed. Please check your connection and try again.');
+        if (event?.target) {
+            event.target.disabled = false;
+            event.target.style.opacity = '1';
+        }
     }
 }
 

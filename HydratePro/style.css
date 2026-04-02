@@ -20,3 +20,9 @@ circle:nth-child(1) { stroke: rgba(255,255,255,0.05); }
 .controls { display: flex; flex-direction: column; gap: 10px; }
 .add-btn { background: var(--primary); border: none; padding: 15px; border-radius: 15px; color: black; font-weight: bold; cursor: pointer; }
 .reset-btn { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #888; padding: 10px; border-radius: 12px; cursor: pointer; margin-top: 10px; }
+.climate-alert { background: linear-gradient(135deg, rgba(255, 130, 70, 0.15), rgba(255, 90, 50, 0.15)); border: 1px solid rgba(255, 130, 70, 0.4); padding: 10px 15px; border-radius: 15px; margin-bottom: 15px; font-size: 0.85rem; font-weight: 600; color: #ffb088; display: flex; align-items: center; gap: 8px; }
+.climate-alert::before { content: '🔥'; font-size: 1.2rem; }
+.hidden { display: none !important; }
+.weather-info { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; margin-bottom: 15px; font-size: 0.9rem; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.05); }
+.heat-mode { --primary: #ff8246 !important; }
+body.heat-mode #progress-ring { filter: drop-shadow(0 0 8px #ff8246); }

@@ -58,40 +58,45 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script>
         window.onload = function() {
-            const user = localStorage.getItem('currentUser');
-            const dob = localStorage.getItem('currentDOB');
-            const realName = localStorage.getItem('userName') || user;
-            if (!localStorage.getItem('isLoggedIn') && !user) { window.location.href = "../index.html"; return; }
-            if (realName) {
-                document.querySelector('#display-name span').innerText = realName;
-                const today = new Date();
-                const bday = new Date(dob);
-                if (today.getMonth() === bday.getMonth() && today.getDate() === bday.getDate()) {
-                    document.documentElement.style.setProperty('--primary', '#ffdb58');
-                    document.getElementById('welcome-text').innerText = "HAPPY BIRTHDAY ENGINEER!";
-                    document.getElementById('cake-placeholder').innerHTML = '<span class="cake-icon">🎂</span>';
-                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#ffdb58', '#ffffff'] });
-                }
-            }
-        };
-        function logout() { localStorage.clear(); window.location.href = "../index.html"; }
-        function filterProjects() {
-            const val = document.getElementById('projectSearch').value.toLowerCase();
-            const cards = document.getElementsByClassName('project-card');
-            for (let card of cards) {
-                const text = card.querySelector('h2').innerText.toLowerCase();
-                card.classList.toggle('hidden', !text.includes(val));
+    const name = localStorage.getItem('currentName');
+    const dob = localStorage.getItem('currentDOB');
+
+    if (!localStorage.getItem('isLoggedIn')) {
+        window.location.href = "../index.html";
+        return;
+    }
+
+    // Standard Greeting
+    const greetingElement = document.querySelector('#display-name span');
+    greetingElement.innerText = name;
+
+    // --- BIRTHDAY ENGINE ---
+    if (dob) {
+        const today = new Date();
+        const birthday = new Date(dob);
+        
+        // Check if Month and Day match
+        if (today.getMonth() === birthday.getMonth() && today.getDate() === birthday.getDate()) {
+            
+            // 1. Change Text to Gold
+            greetingElement.style.color = "#FFD700"; 
+            greetingElement.style.textShadow = "0 0 20px rgba(255, 215, 0, 0.6)";
+            
+            // 2. Change Welcome Message
+            document.getElementById('welcome-msg').innerHTML = `🌟 HAPPY BIRTHDAY, ENGINEER ${name.toUpperCase()}! 🌟`;
+            
+            // 3. Launch Confetti (if you have the library linked)
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#FFD700', '#ffffff', '#00d4ff']
+                });
             }
         }
-        particlesJS("particles-js", {
-            "particles": {
-                "number": { "value": 100 },
-                "size": { "value": 2 }, // SMALL BALLS
-                "color": { "value": "#00d4ff" },
-                "line_linked": { "enable": true, "distance": 120, "opacity": 0.1 },
-                "move": { "enable": true, "speed": 1 }
-            }
-        });
+    }
+};
     </script>
 </body>
 </html>

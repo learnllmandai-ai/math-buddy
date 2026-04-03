@@ -8,27 +8,26 @@
     <link rel="icon" type="image/png" href="https://img.icons8.com/neon/96/00d4ff/circuit.png">
 </head>
 <body>
-    <div class="auth-card">
-        <div class="form-header">
-            <h1 id="form-title">Welcome<span>Back</span></h1>
-            <p id="form-subtext">Enter your credentials to access the hub</p>
+<div class="auth-card">
+    <h2 id="form-title">Welcome<span>Back</span></h2>
+    <p id="form-subtext">Enter your details to access the hub</p>
+
+    <div class="input-group">
+        <input type="text" id="fullName" placeholder="Enter your Name" required>
+        <input type="password" id="password" placeholder="Password" required>
+        
+        <div id="signup-extra-fields" style="display: none;">
+            <input type="number" id="age" placeholder="Your Age">
+            <input type="text" id="city" placeholder="Your City (e.g., Padur)">
+            <p style="font-size: 0.7rem; color: #888; margin: 10px 5px 2px; text-align: left;">Date of Birth:</p>
+            <input type="date" id="dob">
         </div>
-        <div class="input-group">
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <div id="dob-container" style="display: none;">
-                <p style="font-size: 0.8rem; color: #888; margin: 10px 0 5px; text-align: left;">Date of Birth:</p>
-                <input type="date" id="dob" style="width: 100%; box-sizing: border-box;">
-            </div>
-            <div class="remember-me">
-                <input type="checkbox" id="remember">
-                <label for="remember">Remember Me</label>
-            </div>
-        </div>
-        <button id="main-btn" onclick="handleAuth()">Login</button>
-        <div class="toggle-text">
-            <p id="toggle-msg">Don't have an account? <span onclick="toggleMode()">Create Account</span></p>
-        </div>
+    </div>
+
+    <button id="main-btn" onclick="handleAuth()">Login</button>
+    <p id="error-msg" style="color: #ff4d4d; font-size: 0.8rem; margin-top: 10px;"></p>
+    <p id="toggle-msg">Don't have an account? <span onclick="toggleMode()" style="color: #00d4ff; cursor: pointer;">Create Account</span></p>
+</div> 
         <div id="forgot-password-link" class="forgot-password-link">
             <span onclick="showForgotPassword()">Forgot password?</span>
         </div>

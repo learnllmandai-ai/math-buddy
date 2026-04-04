@@ -2,101 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Varsid Hub | Dashboard</title>
+    <title>Engineering Hub</title>
     <link rel="icon" type="image/png" href="https://img.icons8.com/neon/96/00d4ff/circuit.png">
-    <style>
-        :root { --primary: #00d4ff; --bg: #05070a; --card-bg: rgba(22, 27, 34, 0.8); --text: #ffffff; }
-        body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
-        #particles-js { position: fixed; width: 100%; height: 100%; z-index: -1; }
-        .main-hub-btn { position: fixed; top: 20px; left: 20px; background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); color: var(--primary); padding: 10px 18px; border-radius: 12px; text-decoration: none; font-weight: bold; backdrop-filter: blur(10px); z-index: 1000; transition: 0.3s; }
-        .main-hub-btn:hover { background: var(--primary); color: black; }
-        .logout-btn { position: fixed; top: 20px; right: 20px; background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255, 77, 77, 0.3); color: #ff4d4d; padding: 10px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; backdrop-filter: blur(10px); z-index: 1000; transition: 0.3s; }
-        .logout-btn:hover { background: #ff4d4d; color: white; }
-        .container { width: 90%; max-width: 800px; padding: 60px 0; z-index: 1; }
-        .user-greeting { margin-bottom: 30px; text-align: center; }
-        #display-name { font-size: 2.8rem; margin: 0; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 15px; }
-        #display-name span { background: linear-gradient(to bottom, #fff, var(--primary)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .cake-icon { font-size: 2.5rem; filter: drop-shadow(0 0 10px #ffdb58); }
-        .search-container { margin-bottom: 40px; display: flex; justify-content: center; }
-        .search-bar { width: 100%; max-width: 500px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px 25px; border-radius: 50px; color: white; outline: none; backdrop-filter: blur(10px); text-align: center; transition: 0.3s; }
-        .search-bar:focus { border-color: var(--primary); background: rgba(255, 255, 255, 0.08); }
-        .project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 25px; text-decoration: none; color: white; display: flex; align-items: center; gap: 20px; transition: 0.4s; backdrop-filter: blur(10px); }
-        .card:hover { transform: translateY(-10px); border-color: var(--primary); }
-        .hidden { display: none; }
-        .icon-circle { width: 60px; height: 60px; background: rgba(0, 212, 255, 0.1); border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
-        .card-info h2 { margin: 0; font-size: 1.2rem; }
-        .card-info p { margin: 5px 0 0; font-size: 0.85rem; opacity: 0.6; }
-        .badge { font-size: 0.6rem; font-weight: bold; padding: 4px 8px; border-radius: 6px; background: rgba(0, 255, 136, 0.2); color: #00ff88; display: inline-block; margin-bottom: 8px; }
-    </style>
-</head>
-<body>
-    <div id="particles-js"></div>
-    <a href="../HydratePro/index.html" class="main-hub-btn">← Main Hub</a>
-    <button class="logout-btn" onclick="logout()">Logout ⏻</button>
-    <div class="container">
-        <div class="user-greeting">
-            <p id="welcome-text">SYSTEM ONLINE</p>
-            <h1 id="display-name">Welcome, <span>Engineer</span><div id="cake-placeholder"></div></h1>
-        </div>
-        <div class="search-container">
-            <input type="text" id="projectSearch" class="search-bar" placeholder="Search your lab..." onkeyup="filterProjects()">
-        </div>
-        <div class="project-grid">
-            <a href="../HydratePro/index.html" class="card project-card">
-                <div class="icon-circle">💧</div>
-                <div class="card-info"><span class="badge">● Active</span><h2>HydratePro</h2><p>Smart Water Tracking System</p></div>
-            </a>
-            <a href="../RoboticsLab/index.html" class="card project-card">
-                <div class="icon-circle">🤖</div>
-                <div class="card-info"><span class="badge">● Active</span><h2>Robotics Lab</h2><p>Logic Gate & Laser Simulation</p></div>
-            </a>
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <link rel="stylesheet" href="../style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+</head>
+<body style="flex-direction: column;">
+    <nav style="position: absolute; top: 20px; right: 20px;">
+        <button onclick="logout()" style="background:none; border:1px solid #ff4d4d; color:#ff4d4d; padding:8px 15px; border-radius:5px; cursor:pointer;">Logout</button>
+    </nav>
+    <h1 id="welcome-text">Welcome, <span id="display-name" style="color:#00d4ff;">Engineer</span></h1>
+    <div class="grid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 40px;">
+        <div onclick="location.href='../HydratePro/index.html'" style="padding:40px; background:rgba(255,255,255,0.05); border-radius:15px; cursor:pointer;">💧 HydratePro</div>
+        <div onclick="location.href='#'" style="padding:40px; background:rgba(255,255,255,0.05); border-radius:15px; cursor:pointer;">🤖 Robotics Lab</div>
+    </div>
     <script>
         window.onload = function() {
-    const name = localStorage.getItem('currentName');
-    const dob = localStorage.getItem('currentDOB');
-
-    if (!localStorage.getItem('isLoggedIn')) {
-        window.location.href = "../index.html";
-        return;
-    }
-
-    // Standard Greeting
-    const greetingElement = document.querySelector('#display-name span');
-    greetingElement.innerText = name;
-
-    // --- BIRTHDAY ENGINE ---
-    if (dob) {
-        const today = new Date();
-        const birthday = new Date(dob);
-        
-        // Check if Month and Day match
-        if (today.getMonth() === birthday.getMonth() && today.getDate() === birthday.getDate()) {
-            
-            // 1. Change Text to Gold
-            greetingElement.style.color = "#FFD700"; 
-            greetingElement.style.textShadow = "0 0 20px rgba(255, 215, 0, 0.6)";
-            
-            // 2. Change Welcome Message
-            document.getElementById('welcome-msg').innerHTML = `🌟 HAPPY BIRTHDAY, ENGINEER ${name.toUpperCase()}! 🌟`;
-            
-            // 3. Launch Confetti (if you have the library linked)
-            if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#FFD700', '#ffffff', '#00d4ff']
-                });
+            const name = localStorage.getItem('currentName');
+            const dob = localStorage.getItem('currentDOB');
+            if (!localStorage.getItem('isLoggedIn')) { window.location.href = "../index.html"; return; }
+            document.querySelector('#display-name').innerText = name;
+            if (dob) {
+                const t = new Date(); const b = new Date(dob);
+                if (t.getMonth() === b.getMonth() && t.getDate() === b.getDate()) {
+                    const d = document.querySelector('#display-name');
+                    d.style.color = "#FFD700";
+                    document.getElementById('welcome-text').innerHTML = `🌟 HAPPY BIRTHDAY, ${name.toUpperCase()}! 🌟`;
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#FFD700', '#ffffff'] });
+                }
             }
+        };
+        function logout() {
+            localStorage.clear();
+            window.location.href = "../index.html";
         }
-    }
-};
     </script>
 </body>
 </html>

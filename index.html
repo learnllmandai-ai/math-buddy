@@ -3,51 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Varsid Hub | Access</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Engineering Suite | Login</title>
     <link rel="icon" type="image/png" href="https://img.icons8.com/neon/96/00d4ff/circuit.png">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="auth-card">
-    <h2 id="form-title">Welcome<span>Back</span></h2>
-    <p id="form-subtext">Enter your details to access the hub</p>
-
-    <div class="input-group">
-        <input type="text" id="fullName" placeholder="Enter your Name" required>
-        <input type="password" id="password" placeholder="Password" required>
-        
-        <div id="signup-extra-fields" style="display: none;">
-            <input type="number" id="age" placeholder="Your Age">
-            <input type="text" id="city" placeholder="Your City (e.g., Padur)">
-            <p style="font-size: 0.7rem; color: #888; margin: 10px 5px 2px; text-align: left;">Date of Birth:</p>
-            <input type="date" id="dob">
-        </div>
-    </div>
-
-    <button id="main-btn" onclick="handleAuth()">Login</button>
-    <p id="error-msg" style="color: #ff4d4d; font-size: 0.8rem; margin-top: 10px;"></p>
-    <p id="toggle-msg">Don't have an account? <span onclick="toggleMode()" style="color: #00d4ff; cursor: pointer;">Create Account</span></p>
-</div> 
-        <div id="forgot-password-link" class="forgot-password-link">
-            <span onclick="showForgotPassword()">Forgot password?</span>
-        </div>
-        <div id="error-msg" class="error"></div>
-    </div>
-
-    <div id="forgot-modal" class="modal hidden">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeForgotPassword()">✕</button>
-            <h2>Reset Your Password</h2>
-            <p class="modal-subtitle">Enter your username to reset your password</p>
-            <div class="input-group">
-                <input type="text" id="reset-username" placeholder="Username" required>
-                <input type="email" id="reset-email" placeholder="Email or security answer" required>
+    <div class="auth-card">
+        <h2 id="form-title">Welcome<span>Back</span></h2>
+        <p id="form-subtext">Enter your details to access the hub</p>
+        <div class="input-group">
+            <input type="text" id="fullName" placeholder="Enter your Name" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <div id="signup-extra-fields" style="display: none;">
+                <input type="number" id="age" placeholder="Your Age">
+                <input type="text" id="city" placeholder="Your City">
+                <input type="date" id="dob">
             </div>
-            <button class="reset-btn" onclick="handlePasswordReset()">Send Reset Link</button>
-            <div id="reset-msg" class="error"></div>
         </div>
+        <button id="main-btn" onclick="handleAuth()">Login</button>
+        <p id="error-msg" style="color: #ff4d4d; font-size: 0.8rem; margin-top: 10px;"></p>
+        <p id="toggle-msg">Don't have an account? <span onclick="toggleMode()" style="color: #00d4ff; cursor: pointer;">Create Account</span></p>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>

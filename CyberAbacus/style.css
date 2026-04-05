@@ -122,3 +122,20 @@ footer {
 }
 
 .error-shake { animation: shake 0.2s ease-in-out 2; }
+
+/* Prevents zoom on mobile inputs */
+@media screen and (max-width: 768px) {
+    #answer-input {
+        font-size: 3rem;
+        width: 150px;
+    }
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Makes it feel like a real app by disabling text selection */
+body {
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}

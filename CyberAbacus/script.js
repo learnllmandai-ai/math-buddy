@@ -66,6 +66,13 @@ document.getElementById('answer-input').addEventListener('keypress', (e) => {
         } else {
             wrong++;
             document.getElementById('wrong-count').innerText = wrong;
+            
+            // --- NEW VIBRATION CODE ---
+            if ("vibrate" in navigator) {
+                // Vibrate pattern: 100ms on, 50ms off, 100ms on
+                navigator.vibrate([100, 50, 100]);
+            }
+            
             document.getElementById('game-screen').classList.add('error-shake');
             setTimeout(() => document.getElementById('game-screen').classList.remove('error-shake'), 300);
         }

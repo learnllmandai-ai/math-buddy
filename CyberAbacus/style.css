@@ -1,0 +1,124 @@
+:root {
+    --bg: #0a0b10;
+    --panel: #161b22;
+    --neon: #00d4ff;
+    --gold: #ffdb58;
+    --red: #ff4d4d;
+    --green: #2ecc71;
+}
+
+body {
+    margin: 0;
+    background-color: var(--bg);
+    color: white;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
+}
+
+.cyber-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    padding-bottom: 15px;
+}
+
+.logo {
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--neon);
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.stat-box {
+    display: inline-block;
+    margin-left: 20px;
+    font-size: 0.9rem;
+    color: var(--gold);
+}
+
+.timer {
+    border: 1px solid var(--neon);
+    padding: 5px 15px;
+    border-radius: 20px;
+    color: white;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+#start-overlay button {
+    background: transparent;
+    border: 2px solid var(--neon);
+    color: var(--neon);
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.3s;
+    border-radius: 5px;
+}
+
+#start-overlay button:hover {
+    background: var(--neon);
+    color: black;
+    box-shadow: 0 0 20px var(--neon);
+}
+
+#problem-list {
+    font-size: 4rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.num-row {
+    margin: 5px 0;
+}
+
+#answer-input {
+    background: transparent;
+    border: none;
+    border-bottom: 4px solid var(--neon);
+    color: white;
+    font-size: 5rem;
+    width: 250px;
+    text-align: center;
+    outline: none;
+}
+
+footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.score-board span {
+    margin-left: 20px;
+    font-size: 1.2rem;
+}
+
+.correct { color: var(--green); }
+.wrong { color: var(--red); }
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(10px); }
+    50% { transform: translateX(-10px); }
+    100% { transform: translateX(0); }
+}
+
+.error-shake { animation: shake 0.2s ease-in-out 2; }

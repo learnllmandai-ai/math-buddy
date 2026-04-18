@@ -1,6 +1,6 @@
 {
-    "name": "Kite Analytics",
-    "short_name": "KiteGraph",
+    "name": "CodeFlow Analytics",
+    "short_name": "CodeFlow",
     "description": "Professional code analytics dashboard with real-time graph visualization",
     "start_url": "/",
     "display": "standalone",

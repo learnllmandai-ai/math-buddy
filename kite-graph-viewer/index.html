@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Analytics Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <div class="eyebrow">LLM Inference Monitor</div>
+          <h1>Code Analytics Dashboard</h1>
+          <p>
+            Real-time telemetry inspired by Kite’s Graph Viewer, tuned for live
+            code-complexity inspection.
+          </p>
+        </div>
+
+        <section class="sidebar-panel">
+          <div class="panel-heading">
+            <span class="panel-title">Language Streams</span>
+            <span class="panel-meta" id="streamStatus">Live every 2s</span>
+          </div>
+          <div class="language-list" id="languageList"></div>
+        </section>
+
+        <section class="sidebar-panel">
+          <div class="panel-heading">
+            <span class="panel-title">Fetch Layer</span>
+            <span class="pulse-dot"></span>
+          </div>
+          <div class="fetch-card">
+            <div class="fetch-label">Simulated Source</div>
+            <div class="fetch-value" id="modelSource">Codex Stream</div>
+          </div>
+          <div class="fetch-card subtle">
+            <div class="fetch-label">Next Pull</div>
+            <div class="fetch-value" id="nextPull">2.0s</div>
+          </div>
+          <div class="fetch-card subtle">
+            <div class="fetch-label">Latest Snapshot</div>
+            <div class="fetch-value" id="snapshotInfo">Awaiting telemetry…</div>
+          </div>
+        </section>
+      </aside>
+
+      <main class="dashboard">
+        <section class="hero-bar">
+          <div class="hero-copy">
+            <span class="hero-kicker">Cyber-Carbon View</span>
+            <h2>Inference speed vs. code complexity</h2>
+            <p>
+              Smooth multi-line telemetry, language overlays, and a live code
+              mini-map for fast anomaly spotting.
+            </p>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span class="metric-label">Active Model</span>
+              <strong id="activeModel">Codex</strong>
+              <span class="metric-foot">Adaptive polling stream</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Peak Tokens / Sec</span>
+              <strong id="peakTps">0</strong>
+              <span class="metric-foot">Across visible languages</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Visible Languages</span>
+              <strong id="visibleCount">0</strong>
+              <span class="metric-foot">Sidebar toggles in sync</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="chart-panel glass-panel">
+          <div class="panel-heading">
+            <span class="panel-title">Inference Graph</span>
+            <span class="panel-meta">X: Time / Complexity (LOC) | Y: Speed (ms) / Token Probability</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="analyticsChart" aria-label="Code analytics chart"></canvas>
+          </div>
+        </section>
+
+        <section class="bottom-row">
+          <section class="glass-panel feed-panel">
+            <div class="panel-heading">
+              <span class="panel-title">Telemetry Feed</span>
+              <span class="panel-meta" id="feedTime">Waiting for first fetch</span>
+            </div>
+            <div class="feed-list" id="feedList"></div>
+          </section>
+
+          <section class="glass-panel code-panel">
+            <div class="panel-heading">
+              <span class="panel-title">Mini-Map</span>
+              <span class="panel-meta">Code being analyzed</span>
+            </div>
+            <div class="code-viewport">
+              <div class="scanline"></div>
+              <pre class="code-block" id="codeBlock"></pre>
+              <div class="minimap" id="miniMap"></div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

@@ -21,15 +21,15 @@
           <div class="eyebrow">LLM Inference Monitor</div>
           <h1>Code Analytics Dashboard</h1>
           <p>
-            Real-time telemetry inspired by Kite’s Graph Viewer, tuned for live
+            Real-time telemetry inspired by Kite's Graph Viewer, tuned for live
             code-complexity inspection.
           </p>
         </div>
 
         <section class="sidebar-panel">
           <div class="panel-heading">
-            <span class="panel-title">Language Streams</span>
-            <span class="panel-meta" id="streamStatus">Live every 2s</span>
+            <span class="panel-title">Language Filters</span>
+            <span class="panel-meta" id="streamStatus">Live every 2.5s</span>
           </div>
           <div class="language-list" id="languageList"></div>
         </section>
@@ -45,27 +45,28 @@
           </div>
           <div class="fetch-card subtle">
             <div class="fetch-label">Next Pull</div>
-            <div class="fetch-value" id="nextPull">2.0s</div>
+            <div class="fetch-value" id="nextPull">2.5s</div>
           </div>
           <div class="fetch-card subtle">
             <div class="fetch-label">Latest Snapshot</div>
-            <div class="fetch-value" id="snapshotInfo">Awaiting telemetry…</div>
+            <div class="fetch-value" id="snapshotInfo">Awaiting telemetry...</div>
           </div>
         </section>
       </aside>
 
       <main class="dashboard">
-        <section class="hero-bar">
-          <div class="hero-copy">
-            <span class="hero-kicker">Cyber-Carbon View</span>
-            <h2>Inference speed vs. code complexity</h2>
+        <section class="hero-bar glass-panel">
+          <div class="hero-copy stage-copy">
+            <span class="hero-kicker">Obsidian View</span>
+            <h2>Code Efficiency</h2>
             <p>
-              Smooth multi-line telemetry, language overlays, and a live code
-              mini-map for fast anomaly spotting.
+              Smooth neon telemetry for language throughput against growing code
+              complexity, with Python and JavaScript emphasized as the primary
+              inference lanes.
             </p>
           </div>
 
-          <div class="metric-grid">
+          <div class="metric-grid compact-metrics">
             <article class="metric-card">
               <span class="metric-label">Active Model</span>
               <strong id="activeModel">Codex</strong>
@@ -86,7 +87,7 @@
 
         <section class="chart-panel glass-panel">
           <div class="panel-heading">
-            <span class="panel-title">Inference Graph</span>
+            <span class="panel-title">Code Efficiency Graph</span>
             <span class="panel-meta">X: Time / Complexity (LOC) | Y: Speed (ms) / Token Probability</span>
           </div>
           <div class="chart-wrap">

@@ -1,8 +1,10 @@
 const labels = ["128 LOC", "256 LOC", "384 LOC", "512 LOC", "640 LOC", "768 LOC", "896 LOC", "1024 LOC"];
+const LIVE_FETCH_INTERVAL_MS = 2500;
+const LIVE_FETCH_INTERVAL_SECONDS = LIVE_FETCH_INTERVAL_MS / 1000;
   
 const languageConfig = [
-  { key: "python", label: "Python", role: "Primary", color: "#3aa8ff", width: 3.6, tension: 0.42, faded: false, hidden: false },
-  { key: "javascript", label: "JavaScript", role: "Primary", color: "#ffd84d", width: 3.2, tension: 0.38, faded: false, hidden: false },
+  { key: "python", label: "Python", role: "Primary", color: "#44b2ff", width: 3.6, tension: 0.42, faded: false, hidden: false, glow: "rgba(68, 178, 255, 0.95)" },
+  { key: "javascript", label: "JavaScript", role: "Primary", color: "#ffe45c", width: 3.2, tension: 0.38, faded: false, hidden: false, glow: "rgba(255, 228, 92, 0.92)" },
   { key: "java", label: "Java", role: "Background", color: "rgba(119, 143, 176, 0.42)", width: 1.5, tension: 0.36, faded: true, hidden: false },
   { key: "go", label: "Go", role: "Background", color: "rgba(92, 160, 195, 0.34)", width: 1.5, tension: 0.34, faded: true, hidden: false },
   { key: "php", label: "PHP", role: "Background", color: "rgba(164, 142, 214, 0.28)", width: 1.4, tension: 0.34, faded: true, hidden: false },
@@ -39,12 +41,12 @@ const codeSample = [
   "}",
   "",
   "async function fetchLLMTelemetry(model) {",
-  "  const response = await simulatePull(model);",
+  "  const response = await fetchLiveInferenceData(model);",
   "  return response.languages.filter((entry) => entry.visible);",
   "}",
   "",
   "requestAnimationFrame(renderMiniMap);",
-  "setInterval(updateDashboard, 2000);"
+  "setInterval(updateDashboard, 2500);"
 ];
 
 const state = {
@@ -75,7 +77,7 @@ function buildCodeBlock() {
     .map((line, index) => {
       const html = line
         .replace(/\b(const|function|return|async|await)\b/g, '<span class="kw">$1</span>')
-        .replace(/\b(streamInference|fetchLLMTelemetry|simulatePull|updateDashboard|renderMiniMap)\b/g, '<span class="fn">$1</span>')
+        .replace(/\b(streamInference|fetchLLMTelemetry|fetchLiveInferenceData|updateDashboard|renderMiniMap)\b/g, '<span class="fn">$1</span>')
         .replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="num">$1</span>')
         .replace(/(\/\/.*)/g, '<span class="cm">$1</span>');
       return `<span class="line-no">${String(index + 1).padStart(2, "0")}</span>${html}`;
@@ -125,13 +127,39 @@ function datasetFromLanguage(language) {
     borderCapStyle: "round",
     borderJoinStyle: "round",
     cubicInterpolationMode: "monotone",
-    tension: language.tension,
+    tension: Math.max(language.tension, 0.4),
     fill: false,
     hidden: language.hidden,
     borderDash: language.faded ? [6, 6] : [],
-    spanGaps: true
+    spanGaps: true,
+    glow: language.glow || null
   };
 }
+
+const neonGlowPlugin = {
+  id: "neonGlow",
+  beforeDatasetDraw(chartInstance, args) {
+    const dataset = chartInstance.data.datasets[args.index];
+    if (!dataset || dataset.hidden || !dataset.glow) {
+      return;
+    }
+
+    const { ctx } = chartInstance;
+    ctx.save();
+    ctx.shadowColor = dataset.glow;
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  },
+  afterDatasetDraw(chartInstance, args) {
+    const dataset = chartInstance.data.datasets[args.index];
+    if (!dataset || !dataset.glow) {
+      return;
+    }
+
+    chartInstance.ctx.restore();
+  }
+};
 
 function initializeChart() {
   if (!window.Chart) {
@@ -142,6 +170,8 @@ function initializeChart() {
     streamStatus.textContent = "Chart unavailable";
     return null;
   }
+
+  Chart.register(neonGlowPlugin);
 
   return new Chart(chartCanvas, {
     type: "line",
@@ -255,7 +285,7 @@ function renderLanguageToggles() {
         chart.update();
       }
       updateMetrics();
-      streamStatus.textContent = `${language.label} ${language.hidden ? "muted" : "restored"} | Live every 2s`;
+      streamStatus.textContent = `${language.label} ${language.hidden ? "muted" : "restored"} | Live every ${LIVE_FETCH_INTERVAL_SECONDS.toFixed(1)}s`;
     });
   });
 }
@@ -270,7 +300,7 @@ function deriveTokensPerSecond(latency, probability) {
   return Math.max(8, Math.round((1000 / latency) * (10 + probability * 16)));
 }
 
-function simulateTelemetryPull() {
+function fetchLiveInferenceData(modelName = modelSources[state.modelIndex]) {
   return new Promise((resolve) => {
     const networkLag = 240 + Math.round(Math.random() * 260);
     setTimeout(() => {
@@ -294,8 +324,8 @@ function simulateTelemetryPull() {
 
       resolve({
         fetchedAt: new Date(),
-        source: modelSources[state.modelIndex],
-        modelName: state.modelIndex === 0 ? "Codex" : "Gemini",
+        source: modelName,
+        modelName: modelName.includes("Gemini") ? "Gemini" : "Codex",
         lag: networkLag,
         languages
       });
@@ -348,9 +378,9 @@ async function updateDashboard() {
   }
 
   state.isFetching = true;
-  nextPull.textContent = "pulling…";
+  nextPull.textContent = "pulling...";
   try {
-    const snapshot = await simulateTelemetryPull();
+    const snapshot = await fetchLiveInferenceData(modelSources[state.modelIndex]);
     state.modelIndex = (state.modelIndex + 1) % modelSources.length;
 
     snapshot.languages.forEach((language) => {
@@ -369,7 +399,7 @@ async function updateDashboard() {
     updateMetrics(snapshot);
     syncMiniMapWindow();
 
-    const nextIn = 2;
+    const nextIn = LIVE_FETCH_INTERVAL_SECONDS;
     nextPull.textContent = `${nextIn.toFixed(1)}s`;
     streamStatus.textContent = `${snapshot.modelName} synced at ${snapshot.fetchedAt.toLocaleTimeString()}`;
   } catch (error) {
@@ -382,11 +412,11 @@ async function updateDashboard() {
 }
 
 function startPullCountdown() {
-  let remaining = 2;
+  let remaining = LIVE_FETCH_INTERVAL_SECONDS;
   setInterval(() => {
     remaining -= 0.1;
     if (remaining <= 0) {
-      remaining = 2;
+      remaining = LIVE_FETCH_INTERVAL_SECONDS;
     }
     nextPull.textContent = `${remaining.toFixed(1)}s`;
   }, 100);
@@ -410,6 +440,6 @@ updateFeed({
   }))
 });
 updateDashboard();
-setInterval(updateDashboard, 2000);
+setInterval(updateDashboard, LIVE_FETCH_INTERVAL_MS);
 startPullCountdown();
 startMiniMapAnimation();

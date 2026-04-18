@@ -1,0 +1,16 @@
+{
+    "name": "Kite Analytics",
+    "short_name": "KiteGraph",
+    "description": "Professional code analytics dashboard with real-time graph visualization",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#05070a",
+    "theme_color": "#00ffff",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml"
+        }
+    ]
+}

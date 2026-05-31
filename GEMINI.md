@@ -40,3 +40,6 @@ To save and share your progress:
 git add .
 git commit -m "Add authentication and UI improvements"
 git push origin main
+
+### What is origin?
+In Git, origin is just a nickname for the remote URL where your code is hosted on the internet (GitHub). If you ever change your GitHub repository name or move to a new account, you use git remote remove origin and git remote add origin <URL> to change where your terminal sends your code.

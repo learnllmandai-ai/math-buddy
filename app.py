@@ -22,7 +22,151 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
-st.set_page_config(page_title="MathBuddy: K-12 Math Tutor", page_icon="🧮")
+# Set page configuration for a wider layout and custom title/icon
+st.set_page_config(page_title="MathBuddy: K-12 Math Tutor", page_icon="🧮", layout="wide")
+
+# Custom CSS for a more polished and modern look
+st.markdown("""
+    <style>
+    /* General body and app styling */
+    .stApp {
+        background-color: #f0f2f6; /* Light gray background */
+        color: #333; /* Default text color */
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    /* Sidebar styling */
+    .stSidebar {
+        background-color: #ffffff; /* White sidebar background */
+        border-right: 1px solid #e0e0e0; /* Subtle border */
+        padding-top: 2rem; /* Space at the top */
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05); /* Soft shadow */
+    }
+
+    /* Chat messages styling */
+    .stChatMessage {
+        background-color: #ffffff; /* White background for all messages */
+        border-radius: 10px; /* Rounded corners */
+        padding: 10px 15px; /* Padding inside messages */
+        margin-bottom: 10px; /* Space between messages */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Soft shadow */
+    }
+    /* Specific styling for user messages */
+    .stChatMessage.user {
+        background-color: #e6f7ff; /* Light blue for user messages */
+        border-left: 5px solid #007bff; /* Blue left border */
+    }
+    /* Specific styling for assistant messages */
+    .stChatMessage.assistant {
+        background-color: #f9f9f9; /* Very light gray for assistant messages */
+        border-left: 5px solid #6c757d; /* Gray left border */
+    }
+
+    /* Button styling */
+    .stButton > button {
+        background-color: #007bff; /* Primary blue color */
+        color: white; /* White text */
+        border-radius: 5px; /* Rounded corners */
+        border: none; /* No border */
+        padding: 10px 20px; /* Padding */
+        font-size: 16px; /* Font size */
+        transition: background-color 0.3s ease; /* Smooth hover effect */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Soft shadow */
+    }
+    .stButton > button:hover {
+        background-color: #0056b3; /* Darker blue on hover */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* Slightly larger shadow on hover */
+    }
+
+    /* Link button styling (for OAuth) */
+    a.stLinkButton > button {
+        background-color: #111827;
+        color: white;
+        background-color: #007bff;
+        color: white !important;
+        border-radius: 8px;
+        border: none;
+        padding: 12px 20px;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+        box-shadow: 0 8px 18px rgba(17, 24, 39, 0.16);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    a.stLinkButton > button:hover {
+        background-color: #1f2937;
+        box-shadow: 0 10px 22px rgba(17, 24, 39, 0.2);
+    a.stLinkButton > button:hover, a.stLinkButton > button:active, a.stLinkButton > button:focus {
+        background-color: #0056b3 !important;
+        color: white !important;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Expander header styling */
+    .streamlit-expanderHeader {
+        background-color: #e9ecef; /* Light gray background */
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #495057; /* Darker text color */
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    /* Title and headers styling */
+    h1, h2, h3, h4, h5, h6 {
+        color: #2c3e50; /* Darker blue-gray for headers */
+    }
+
+    /* Info, Warning, Error boxes styling */
+    .stAlert {
+        border-radius: 8px; /* Rounded corners for alerts */
+    }
+
+    /* Input fields styling */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stFileUploader > div > div > button {
+        border-radius: 5px;
+        border: 1px solid #ced4da; /* Light gray border */
+        padding: 8px 12px;
+    }
+
+    /* Slider styling */
+    .stSlider > div > div > div > div {
+        background-color: #007bff; /* Primary blue for slider track */
+    }
+    .stSlider > div > div > div > div > div {
+        background-color: #007bff; /* Primary blue for slider handle */
+        border: 2px solid #007bff;
+    }
+
+    /* Login page styling */
+    .login-title {
+        color: #1f3349;
+        font-size: 2.75rem;
+        font-weight: 800;
+        line-height: 1.15;
+        margin-bottom: 0.75rem;
+        text-align: center;
+    }
+    .login-subtitle {
+        color: #374151;
+        font-size: 1.08rem;
+        margin-bottom: 2.5rem;
+        text-align: center;
+    }
+    .login-note {
+        background-color: #e8eef7;
+        border: 1px solid #c8d5e8;
+        border-radius: 8px;
+        color: #314761;
+        font-size: 0.95rem;
+        line-height: 1.55;
+        margin-top: 1rem;
+        padding: 0.95rem 1rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- OAuth Configuration ---
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
@@ -89,42 +233,49 @@ if not st.session_state["authenticated"]:
             st.rerun()
 
 if not st.session_state["authenticated"]:
-    st.title("🧮 Welcome to MathBuddy")
-    st.write("Please sign in to access your patient, step-by-step AI math tutor.")
+    # Center the title and description
+    st.markdown("<h1 class='login-title'>🧮 Welcome to MathBuddy</h1>", unsafe_allow_html=True)
+    st.markdown("<p class='login-subtitle'>Please sign in to access your patient, step-by-step AI math tutor.</p>", unsafe_allow_html=True)
 
     if st.session_state.get("auth_error"):
         st.error(st.session_state["auth_error"])
         st.session_state["auth_error"] = None
     
-    if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
-        google_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode({
-            "client_id": GOOGLE_CLIENT_ID,
-            "response_type": "code",
-            "scope": "openid profile email",
-            "redirect_uri": REDIRECT_URI,
-            "state": "google",
-        })
-        st.link_button("🌐 Sign in with Google", google_url, use_container_width=True)
-    else:
-        st.warning("Google sign-in is not configured yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file.")
+    # Use columns to center the login buttons and warnings
+    col1, col_main, col3 = st.columns([1, 2, 1]) # Adjust column ratios if needed
+    with col_main:
+        if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+            google_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode({
+                "client_id": GOOGLE_CLIENT_ID,
+                "response_type": "code",
+                "scope": "openid profile email",
+                "redirect_uri": REDIRECT_URI,
+                "state": "google",
+            })
+            st.link_button("🌐 Sign in with Google", google_url, use_container_width=True)
+        else:
+            st.warning("Google sign-in is not configured yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file.")
 
-    if MS_CLIENT_ID and MS_CLIENT_SECRET:
-        ms_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?" + urlencode({
-            "client_id": MS_CLIENT_ID,
-            "response_type": "code",
-            "scope": "User.Read",
-            "redirect_uri": REDIRECT_URI,
-            "state": "microsoft",
-        })
-        st.link_button("💻 Sign in with Microsoft", ms_url, use_container_width=True)
-    st.stop()
+        if MS_CLIENT_ID and MS_CLIENT_SECRET:
+            ms_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?" + urlencode({
+                "client_id": MS_CLIENT_ID,
+                "response_type": "code",
+                "scope": "User.Read",
+                "redirect_uri": REDIRECT_URI,
+                "state": "microsoft",
+            })
+            st.link_button("💻 Sign in with Microsoft", ms_url, use_container_width=True)
+        else:
+            st.markdown(
+                "<div class='login-note'>Microsoft sign-in is optional and not configured for this app.</div>",
+                unsafe_allow_html=True,
+            )
+    st.stop() # Stop execution if not authenticated
 
 # Initialize History & User Data
 history = StreamlitChatMessageHistory(key="messages")
 user_email = st.session_state["user_info"].get("email", "guest")
 user_name = st.session_state["user_info"].get("name", "Student")
-
-st.session_state["current_page"] = "dashboard"
 
 st.title("🧮 MathBuddy Tutor Dashboard")
 st.caption(f"Hello {user_name}! I'm here to help you discover answers step-by-step.")
@@ -144,16 +295,22 @@ PROGRESS_FILE = "progress_data.json"
 
 def load_progress_data(email):
     if Path(PROGRESS_FILE).exists():
-        with open(PROGRESS_FILE, "r") as f:
-            all_data = json.load(f)
-            return all_data.get(email, [])
+        try:
+            with open(PROGRESS_FILE, "r") as f:
+                all_data = json.load(f)
+                return all_data.get(email, [])
+        except (json.JSONDecodeError, ValueError):
+            return []
     return []
 
 def save_progress_data(email, data):
     all_data = {}
     if Path(PROGRESS_FILE).exists():
-        with open(PROGRESS_FILE, "r") as f:
-            all_data = json.load(f)
+        try:
+            with open(PROGRESS_FILE, "r") as f:
+                all_data = json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            pass
     all_data[email] = data
     with open(PROGRESS_FILE, "w") as f:
         json.dump(all_data, f, indent=2)
@@ -291,7 +448,7 @@ for msg in history.messages:
     elif isinstance(msg, AIMessage):
         st.chat_message("assistant").write(msg.content)
 
-st.markdown("---")
+st.divider() # Use st.divider() for a cleaner visual separation
 with st.expander("📷 Snap & Solve a Handwritten Formula"):
     st.caption("📸 Upload or take a photo of your handwritten math problem")
     if st.button("📷 Open camera", use_container_width=True):

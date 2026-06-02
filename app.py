@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import pandas as pd
 import base64
+from urllib.parse import urlencode
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,6 +30,10 @@ REDIRECT_URI = os.getenv("REDIRECT_URI", "http://localhost:8501")
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
     st.session_state["user_info"] = {}
+if "current_page" not in st.session_state:
+    st.session_state["current_page"] = "login"
+if "auth_error" not in st.session_state:
+    st.session_state["auth_error"] = None
 
 # --- Functional OAuth Callback Logic ---
 if not st.session_state["authenticated"]:
@@ -41,9 +46,26 @@ if not st.session_state["authenticated"]:
         if state == "google":
             token_url, user_url = "https://oauth2.googleapis.com/token", "https://www.googleapis.com/oauth2/v3/userinfo"
             creds = {"client_id": GOOGLE_CLIENT_ID, "client_secret": GOOGLE_CLIENT_SECRET}
-        else:
+            missing_creds = [name for name, value in {
+                "GOOGLE_CLIENT_ID": GOOGLE_CLIENT_ID,
+                "GOOGLE_CLIENT_SECRET": GOOGLE_CLIENT_SECRET,
+            }.items() if not value]
+        elif state == "microsoft":
             token_url, user_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token", "https://graph.microsoft.com/v1.0/me"
             creds = {"client_id": MS_CLIENT_ID, "client_secret": MS_CLIENT_SECRET}
+            missing_creds = [name for name, value in {
+                "MS_CLIENT_ID": MS_CLIENT_ID,
+                "MS_CLIENT_SECRET": MS_CLIENT_SECRET,
+            }.items() if not value]
+        else:
+            st.session_state["auth_error"] = "Unknown sign-in provider. Please try again from the login page."
+            st.query_params.clear()
+            st.rerun()
+
+        if missing_creds:
+            st.session_state["auth_error"] = f"{state.title()} sign-in is missing: {', '.join(missing_creds)}."
+            st.query_params.clear()
+            st.rerun()
 
         res = requests.post(token_url, data={**creds, "code": code, "redirect_uri": REDIRECT_URI, "grant_type": "authorization_code"})
         if res.status_code == 200:
@@ -51,19 +73,44 @@ if not st.session_state["authenticated"]:
             u_res = requests.get(user_url, headers={"Authorization": f"Bearer {token}"}).json()
             st.session_state["user_info"] = {"name": u_res.get("name") or u_res.get("displayName"), "email": u_res.get("email") or u_res.get("mail")}
             st.session_state["authenticated"] = True
+            st.session_state["current_page"] = "dashboard"
+            st.query_params.clear()
+            st.rerun()
+        else:
+            error_details = res.json().get("error_description", "Please check your OAuth client ID, secret, and redirect URI.")
+            st.session_state["auth_error"] = f"Sign-in failed: {error_details}"
             st.query_params.clear()
             st.rerun()
 
 if not st.session_state["authenticated"]:
     st.title("🧮 Welcome to MathBuddy")
     st.write("Please sign in to access your patient, step-by-step AI math tutor.")
-    
-    google_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={GOOGLE_CLIENT_ID}&response_type=code&scope=openid%20profile%20email&redirect_uri={REDIRECT_URI}&state=google"
-    ms_url = f"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={MS_CLIENT_ID}&response_type=code&scope=User.Read&redirect_uri={REDIRECT_URI}&state=microsoft"
 
-    c1, c2 = st.columns(2)
-    c1.link_button("🌐 Sign in with Google", google_url, use_container_width=True)
-    c2.link_button("💻 Sign in with Microsoft", ms_url, use_container_width=True)
+    if st.session_state.get("auth_error"):
+        st.error(st.session_state["auth_error"])
+        st.session_state["auth_error"] = None
+    
+    if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+        google_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode({
+            "client_id": GOOGLE_CLIENT_ID,
+            "response_type": "code",
+            "scope": "openid profile email",
+            "redirect_uri": REDIRECT_URI,
+            "state": "google",
+        })
+        st.link_button("🌐 Sign in with Google", google_url, use_container_width=True)
+    else:
+        st.warning("Google sign-in is not configured yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file.")
+
+    if MS_CLIENT_ID and MS_CLIENT_SECRET:
+        ms_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?" + urlencode({
+            "client_id": MS_CLIENT_ID,
+            "response_type": "code",
+            "scope": "User.Read",
+            "redirect_uri": REDIRECT_URI,
+            "state": "microsoft",
+        })
+        st.link_button("💻 Sign in with Microsoft", ms_url, use_container_width=True)
     st.stop()
 
 # Initialize History & User Data
@@ -71,7 +118,9 @@ history = StreamlitChatMessageHistory(key="messages")
 user_email = st.session_state["user_info"].get("email", "guest")
 user_name = st.session_state["user_info"].get("name", "Student")
 
-st.title("🧮 MathBuddy: K-12 Math Tutor")
+st.session_state["current_page"] = "dashboard"
+
+st.title("🧮 MathBuddy Tutor Dashboard")
 st.caption(f"Hello {user_name}! I'm here to help you discover answers step-by-step.")
 
 with st.sidebar:

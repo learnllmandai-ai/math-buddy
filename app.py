@@ -1,22 +1,26 @@
 import streamlit as st
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from google import genai
+from google.genai import types
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 import os
 import requests
 import json
 from pathlib import Path
 import pandas as pd
-import base64
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Check for OpenAI API Key
-if not os.getenv("OPENAI_API_KEY"):
-    st.error("🔑 OpenAI API Key not found! Please set OPENAI_API_KEY in your .env file or environment variables.")
+# Check for Gemini API Key
+if not os.getenv("GEMINI_API_KEY"):
+    st.error("🔑 Gemini API Key not found! Please set GEMINI_API_KEY in your .env file or environment variables.")
     st.stop()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 st.set_page_config(page_title="MathBuddy: K-12 Math Tutor", page_icon="🧮")
 
@@ -34,6 +38,8 @@ if "current_page" not in st.session_state:
     st.session_state["current_page"] = "login"
 if "auth_error" not in st.session_state:
     st.session_state["auth_error"] = None
+if "show_camera_input" not in st.session_state:
+    st.session_state["show_camera_input"] = False
 
 # --- Functional OAuth Callback Logic ---
 if not st.session_state["authenticated"]:
@@ -204,33 +210,74 @@ def get_system_prompt(grade_level):
 
 system_prompt = get_system_prompt(grade)
 
+def show_gemini_error(error, action):
+    """Display a helpful Gemini API error without exposing raw stack details."""
+    message = str(error)
+    if "quota" in message.lower() or "429" in message:
+        st.error(
+            "Gemini quota exceeded or rate limited. Please wait a bit and try again, "
+            "or check your Google AI Studio quota."
+        )
+    else:
+        st.error(f"Error {action}: {message}")
+
+def history_to_gemini_contents(messages):
+    contents = []
+    for msg in messages:
+        role = "model" if isinstance(msg, AIMessage) else "user"
+        if isinstance(msg.content, list):
+            text = next((item["text"] for item in msg.content if item.get("type") == "text"), "The user sent an image.")
+        else:
+            text = str(msg.content)
+        contents.append(types.Content(role=role, parts=[types.Part(text=text)]))
+    return contents
+
 def send_text_query_to_llm(messages, system_prompt):
     """Send a text query to the LLM and return the response."""
     try:
-        full_chat_context = [SystemMessage(content=system_prompt)] + messages
-        llm = ChatOpenAI(model="gpt-4o", temperature=0.4)
-        ai_response = llm.invoke(full_chat_context)
-        return ai_response.content
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=history_to_gemini_contents(messages),
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.4,
+            ),
+        )
+        return response.text
     except Exception as e:
-        st.error(f"❌ Error calling OpenAI: {str(e)}")
+        show_gemini_error(e, "calling Gemini")
         return None
 
-def send_image_query_to_llm(image_bytes, messages, system_prompt):
+def send_image_query_to_llm(image_bytes, mime_type, messages, system_prompt):
     """Send an image query to the LLM and return the response."""
     try:
-        base64_image = base64.b64encode(image_bytes).decode("utf-8")
         vision_message = HumanMessage(
             content=[
                 {"type": "text", "text": "Please look at this handwritten math formula image. Convert it to standard LaTeX format and help me solve it step-by-step using your standard teaching rules."},
-                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                {"type": "image", "mime_type": mime_type}
             ]
         )
-        full_chat_context = [SystemMessage(content=system_prompt)] + messages + [vision_message]
-        llm = ChatOpenAI(model="gpt-4o", temperature=0.4)
-        ai_response = llm.invoke(full_chat_context)
-        return ai_response.content, vision_message
+        contents = history_to_gemini_contents(messages)
+        contents.append(
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part(text=vision_message.content[0]["text"]),
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                ],
+            )
+        )
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.4,
+            ),
+        )
+        return response.text, vision_message
     except Exception as e:
-        st.error(f"❌ Error processing image: {str(e)}")
+        show_gemini_error(e, "processing image")
         return None, None
 
 for msg in history.messages:
@@ -247,7 +294,13 @@ for msg in history.messages:
 st.markdown("---")
 with st.expander("📷 Snap & Solve a Handwritten Formula"):
     st.caption("📸 Upload or take a photo of your handwritten math problem")
-    img_file = st.camera_input("Take a photo of your math problem")
+    if st.button("📷 Open camera", use_container_width=True):
+        st.session_state["show_camera_input"] = True
+
+    img_file = None
+    if st.session_state["show_camera_input"]:
+        img_file = st.camera_input("Take a photo of your math problem")
+
     uploaded_file = st.file_uploader("Or upload an image file", type=["png", "jpg", "jpeg"])
     
     active_file = img_file if img_file is not None else uploaded_file
@@ -255,9 +308,10 @@ with st.expander("📷 Snap & Solve a Handwritten Formula"):
     if active_file is not None:
         st.image(active_file, caption="Your Math Problem", use_container_width=True)
         if st.button("✨ Send to MathBuddy"):
-            with st.spinner("🔍 Processing image with OpenAI Vision..."):
+            with st.spinner("🔍 Processing image with Gemini Vision..."):
                 bytes_data = active_file.read()
-                response_content, vision_message = send_image_query_to_llm(bytes_data, history.messages, system_prompt)
+                mime_type = active_file.type or "image/jpeg"
+                response_content, vision_message = send_image_query_to_llm(bytes_data, mime_type, history.messages, system_prompt)
                 
                 if response_content:
                     history.add_message(vision_message)

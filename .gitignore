@@ -1,5 +1,6 @@
 
 .env
+progress_data.json
 
 
 .venv/

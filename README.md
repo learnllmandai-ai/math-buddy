@@ -34,13 +34,18 @@ MathBuddy is an AI-powered math tutoring application designed for students from 
 
 2. **Install dependencies:**
    ```bash
-   pip install streamlit langchain-openai python-dotenv
+   pip install streamlit langchain-openai python-dotenv requests pandas
    ```
 
 3. **Configure Environment:**
    Create a `.env` file in the root directory and add your OpenAI API key:
    ```env
    OPENAI_API_KEY=your_api_key_here
+   GOOGLE_CLIENT_ID=your_google_id
+   GOOGLE_CLIENT_SECRET=your_google_secret
+   MS_CLIENT_ID=your_ms_id
+   MS_CLIENT_SECRET=your_ms_secret
+   REDIRECT_URI=http://localhost:8501
    ```
 
 ### Running the Application

@@ -1,7 +1,9 @@
 import streamlit as st
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 import os
+import requests
 import json
 from pathlib import Path
 import pandas as pd
@@ -17,21 +19,65 @@ if not os.getenv("OPENAI_API_KEY"):
 
 st.set_page_config(page_title="MathBuddy: K-12 Math Tutor", page_icon="🧮")
 
+# --- OAuth Configuration ---
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+MS_CLIENT_ID = os.getenv("MS_CLIENT_ID")
+MS_CLIENT_SECRET = os.getenv("MS_CLIENT_SECRET")
+REDIRECT_URI = os.getenv("REDIRECT_URI", "http://localhost:8501")
+
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
+    st.session_state["user_info"] = {}
+
+# --- Functional OAuth Callback Logic ---
+if not st.session_state["authenticated"]:
+    query_params = st.query_params
+    if "code" in query_params:
+        code = query_params["code"]
+        state = query_params.get("state")
+        
+        # Determine provider and exchange code for token
+        if state == "google":
+            token_url, user_url = "https://oauth2.googleapis.com/token", "https://www.googleapis.com/oauth2/v3/userinfo"
+            creds = {"client_id": GOOGLE_CLIENT_ID, "client_secret": GOOGLE_CLIENT_SECRET}
+        else:
+            token_url, user_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token", "https://graph.microsoft.com/v1.0/me"
+            creds = {"client_id": MS_CLIENT_ID, "client_secret": MS_CLIENT_SECRET}
+
+        res = requests.post(token_url, data={**creds, "code": code, "redirect_uri": REDIRECT_URI, "grant_type": "authorization_code"})
+        if res.status_code == 200:
+            token = res.json().get("access_token")
+            u_res = requests.get(user_url, headers={"Authorization": f"Bearer {token}"}).json()
+            st.session_state["user_info"] = {"name": u_res.get("name") or u_res.get("displayName"), "email": u_res.get("email") or u_res.get("mail")}
+            st.session_state["authenticated"] = True
+            st.query_params.clear()
+            st.rerun()
 
 if not st.session_state["authenticated"]:
     st.title("🧮 Welcome to MathBuddy")
-    st.write("Your patient, step-by-step K-12 math tutor powered by AI.")
-    st.info("📚 Click below to get started. Your progress will be saved.")
+    st.write("Please sign in to access your patient, step-by-step AI math tutor.")
     
-    if st.button("✨ Continue to MathBuddy", use_container_width=True, type="primary"):
-        st.session_state["authenticated"] = True
-        st.rerun()
+    google_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={GOOGLE_CLIENT_ID}&response_type=code&scope=openid%20profile%20email&redirect_uri={REDIRECT_URI}&state=google"
+    ms_url = f"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id={MS_CLIENT_ID}&response_type=code&scope=User.Read&redirect_uri={REDIRECT_URI}&state=microsoft"
+
+    c1, c2 = st.columns(2)
+    c1.link_button("🌐 Sign in with Google", google_url, use_container_width=True)
+    c2.link_button("💻 Sign in with Microsoft", ms_url, use_container_width=True)
     st.stop()
 
+# Initialize History & User Data
+history = StreamlitChatMessageHistory(key="messages")
+user_email = st.session_state["user_info"].get("email", "guest")
+user_name = st.session_state["user_info"].get("name", "Student")
+
 st.title("🧮 MathBuddy: K-12 Math Tutor")
-st.caption("A patient, encouraging tutor who helps you discover answers step-by-step!")
+st.caption(f"Hello {user_name}! I'm here to help you discover answers step-by-step.")
+
+with st.sidebar:
+    if st.button("Logout"):
+        st.session_state.clear()
+        st.rerun()
 
 grade = st.sidebar.selectbox(
     "Select your Grade Level:",
@@ -41,25 +87,31 @@ grade = st.sidebar.selectbox(
 # Load or initialize progress data from file
 PROGRESS_FILE = "progress_data.json"
 
-def load_progress_data():
+def load_progress_data(email):
     if Path(PROGRESS_FILE).exists():
         with open(PROGRESS_FILE, "r") as f:
-            return json.load(f)
+            all_data = json.load(f)
+            return all_data.get(email, [])
     return []
 
-def save_progress_data(data):
+def save_progress_data(email, data):
+    all_data = {}
+    if Path(PROGRESS_FILE).exists():
+        with open(PROGRESS_FILE, "r") as f:
+            all_data = json.load(f)
+    all_data[email] = data
     with open(PROGRESS_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump(all_data, f, indent=2)
 
 if "progress_data" not in st.session_state:
-    st.session_state["progress_data"] = load_progress_data()
+    st.session_state["progress_data"] = load_progress_data(user_email)
 
 with st.sidebar.expander("📊 Log Today's Progress"):
     new_score = st.slider("Select your score:", 0, 100, 85)
     if st.button("Save Score"):
         lesson_num = len(st.session_state["progress_data"]) + 1
         st.session_state["progress_data"].append({"Lesson": f"L{lesson_num}", "Score": new_score})
-        save_progress_data(st.session_state["progress_data"])
+        save_progress_data(user_email, st.session_state["progress_data"])
         st.success("✅ Score saved!")
         st.rerun()
 
@@ -80,7 +132,7 @@ else:
     st.sidebar.caption("No progress logged yet. Track your scores above!")
 
 if st.sidebar.button("Clear Conversation History"):
-    st.session_state.messages = []
+    history.clear()
     st.rerun()
 
 def get_system_prompt(grade_level):
@@ -132,10 +184,7 @@ def send_image_query_to_llm(image_bytes, messages, system_prompt):
         st.error(f"❌ Error processing image: {str(e)}")
         return None, None
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-for msg in st.session_state.messages:
+for msg in history.messages:
     if isinstance(msg, HumanMessage):
         # Handle rendering text-only or complex multimodal text blocks cleanly in the history UI
         if isinstance(msg.content, list):
@@ -159,23 +208,23 @@ with st.expander("📷 Snap & Solve a Handwritten Formula"):
         if st.button("✨ Send to MathBuddy"):
             with st.spinner("🔍 Processing image with OpenAI Vision..."):
                 bytes_data = active_file.read()
-                response_content, vision_message = send_image_query_to_llm(bytes_data, st.session_state.messages, system_prompt)
+                response_content, vision_message = send_image_query_to_llm(bytes_data, history.messages, system_prompt)
                 
                 if response_content:
-                    st.session_state.messages.append(vision_message)
-                    st.session_state.messages.append(AIMessage(content=response_content))
+                    history.add_message(vision_message)
+                    history.add_ai_message(response_content)
                     st.rerun()
 
 if user_query := st.chat_input("Ask your math question here..."):
     st.chat_message("user").write(user_query)
-    st.session_state.messages.append(HumanMessage(content=user_query))
+    history.add_user_message(user_query)
     
     with st.chat_message("assistant"):
         with st.spinner("🤔 Thinking..."):
-            response_content = send_text_query_to_llm(st.session_state.messages, system_prompt)
+            response_content = send_text_query_to_llm(history.messages, system_prompt)
             if response_content:
                 st.write(response_content)
-                st.session_state.messages.append(AIMessage(content=response_content))
+                history.add_ai_message(response_content)
 
-if not st.session_state.messages and st.session_state["authenticated"]:
+if not history.messages and st.session_state["authenticated"]:
     st.info("👋 Welcome! Type a math question or upload an image to get started.")

@@ -1,58 +1,76 @@
-# 🧮 MathBuddy: K-12 Math Tutor
+# 🧮 MathBuddy: Gemini-Powered K-12 Math Tutor
 
-MathBuddy is an AI-powered math tutoring application designed for students from Grade 1 to 12. Built with Streamlit and LangChain, it provides a patient, encouraging, and adaptive learning experience.
+MathBuddy is a Streamlit-based AI tutor for students in Grades 1–12. The current app uses Google Gemini for tutoring, supports Google and Microsoft OAuth sign-in, tracks lesson progress, and can solve handwritten math images with Gemini Vision.
 
-## ✨ Features
+## ✨ What the app does now
 
-- **Adaptive Tutoring:** Adjusts tone, emojis, and complexity based on the student's grade level.
-- **Step-by-Step Guidance:** Follows a pedagogical approach—never giving the final answer immediately, but guiding the student to discover it.
-- **LaTeX Support:** Beautifully renders mathematical formulas (e.g., $x^2 + y^2 = r^2$) for clarity.
-- **Authentication:** Includes a secure-entry UI with Google and Microsoft login options.
-- **Conversation Memory:** Remembers previous context within a session to provide continuous support.
+- **Adaptive tutoring:** Uses the selected grade band to tailor the tone, explanation level, and examples.
+- **Step-by-step guidance:** Encourages students to think first rather than immediately revealing the answer.
+- **Gemini AI support:** Uses Google Gemini for chat responses and image-based math help.
+- **Handwritten formula input:** Lets users upload or capture a photo of a math problem and send it to Gemini Vision.
+- **OAuth login:** Supports Google sign-in and Microsoft sign-in through the configured OAuth flow.
+- **Progress tracking:** Saves lesson scores to `progress_data.json` and shows a simple learning-curve chart in the sidebar.
+- **Session memory:** Keeps the current chat history during the active session.
 
-## 🛠️ Tech Stack
+## 🛠️ Current tech stack
 
-- **Frontend:** [Streamlit](https://streamlit.io/)
-- **AI Framework:** [LangChain](https://www.langchain.com/)
-- **LLM:** OpenAI GPT-4o
-- **Environment Management:** `python-dotenv`
+- **Frontend/UI:** Streamlit
+- **AI model:** Google Gemini (`google-genai`)
+- **Conversation history:** LangChain message objects and `StreamlitChatMessageHistory`
+- **Utilities:** Python, `requests`, `pandas`, `python-dotenv`
 
-## 🚀 Getting Started
+## 🚀 Getting started
 
 ### Prerequisites
 
-- Python 3.9+
-- OpenAI API Key
+- Python 3.10+
+- A Gemini API key from Google AI Studio
+- Optional OAuth credentials for Google and/or Microsoft sign-in
 
 ### Installation
 
-1. **Clone the repository:**
+1. Clone the repository and enter the project folder.
+2. Install dependencies:
+
    ```bash
-   git clone <your-repo-url>
-   cd Varsid
+   pip install -r requirements.txt
    ```
 
-2. **Install dependencies:**
-   ```bash
-   pip install streamlit langchain-openai langchain-community python-dotenv requests pandas
-   ```
+3. Create a `.env` file in the project root with the following variables:
 
-3. **Configure Environment:**
-   Create a `.env` file in the root directory and add your OpenAI API key:
    ```env
-   OPENAI_API_KEY=your_api_key_here
-   GOOGLE_CLIENT_ID=your_google_id
-   GOOGLE_CLIENT_SECRET=your_google_secret
-   MS_CLIENT_ID=your_ms_id
-   MS_CLIENT_SECRET=your_ms_secret
+   GEMINI_API_KEY=your_gemini_api_key
+   GEMINI_MODEL=gemini-2.5-flash
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   MS_CLIENT_ID=your_microsoft_client_id
+   MS_CLIENT_SECRET=your_microsoft_client_secret
    REDIRECT_URI=http://localhost:8501
    ```
 
-### Running the Application
+   Notes:
+   - `GEMINI_API_KEY` is required for the tutor to work.
+   - Google sign-in requires `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+   - Microsoft sign-in is optional and uses `MS_CLIENT_ID` and `MS_CLIENT_SECRET`.
+
+### Run the app
+
+```bash
+streamlit run app.py
+```
+
+You can also use:
 
 ```bash
 python -m streamlit run app.py
 ```
 
+## 📁 Important files
+
+- `app.py` — main Streamlit application
+- `progress_data.json` — stores lesson scores for the logged-in user
+- `GEMINI.md` — technical notes and architecture overview
+
 ## 📝 Documentation
-For detailed technical architecture notes and Git workflows, please see GEMINI.md.
+
+For the current implementation details, prompt logic, Gemini integration, and project notes, see [GEMINI.md](GEMINI.md).

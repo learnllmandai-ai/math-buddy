@@ -291,26 +291,31 @@ grade = st.sidebar.selectbox(
 )
 
 # Load or initialize progress data from file
-PROGRESS_FILE = "progress_data.json"
+PROGRESS_FILE = ".progress_data.json"
+LEGACY_PROGRESS_FILE = "progress_data.json"
+
 
 def load_progress_data(email):
-    if Path(PROGRESS_FILE).exists():
-        try:
-            with open(PROGRESS_FILE, "r") as f:
-                all_data = json.load(f)
+    for path in (PROGRESS_FILE, LEGACY_PROGRESS_FILE):
+        if Path(path).exists():
+            try:
+                with open(path, "r") as f:
+                    all_data = json.load(f)
                 return all_data.get(email, [])
-        except (json.JSONDecodeError, ValueError):
-            return []
+            except (json.JSONDecodeError, ValueError):
+                continue
     return []
+
 
 def save_progress_data(email, data):
     all_data = {}
-    if Path(PROGRESS_FILE).exists():
-        try:
-            with open(PROGRESS_FILE, "r") as f:
-                all_data = json.load(f)
-        except (json.JSONDecodeError, ValueError):
-            pass
+    for path in (PROGRESS_FILE, LEGACY_PROGRESS_FILE):
+        if Path(path).exists():
+            try:
+                with open(path, "r") as f:
+                    all_data = json.load(f)
+            except (json.JSONDecodeError, ValueError):
+                continue
     all_data[email] = data
     with open(PROGRESS_FILE, "w") as f:
         json.dump(all_data, f, indent=2)

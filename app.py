@@ -92,9 +92,6 @@ st.markdown("""
         box-shadow: 0 8px 18px rgba(17, 24, 39, 0.16);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    a.stLinkButton > button:hover {
-        background-color: #1f2937;
-        box-shadow: 0 10px 22px rgba(17, 24, 39, 0.2);
     a.stLinkButton > button:hover, a.stLinkButton > button:active, a.stLinkButton > button:focus {
         background-color: #0056b3 !important;
         color: white !important;
@@ -364,11 +361,11 @@ def get_system_prompt(grade_level):
     )
     
     if "Primary" in grade_level:
-        return f"{base_rules} Use simple words, enthusiastic praise, and plenty of friendly emojis (like 🍎, ✨, 🚀). Keep explanations very short (2-3 sentences)."
+        return f"{base_rules} Persona: Friendly & High-Energy. Use simple words, enthusiastic praise, and plenty of friendly emojis (like 🍎, ✨, 🚀). Keep explanations very short (2-3 sentences)."
     elif "Middle" in grade_level:
-        return f"{base_rules} Use encouraging language, real-world examples (like sports or pizza), and clear, numbered steps."
+        return f"{base_rules} Persona: Relatable Mentor. Use encouraging language, real-world examples (like sports, pizza, or gaming), and clear, numbered steps."
     else:
-        return f"{base_rules} Use mature, analytical reasoning. Focus on theorem validation, rigorous proofs, and deep conceptual understanding."
+        return f"{base_rules} Persona: Academic Advisor. Use mature, analytical reasoning. Focus on theorem validation, rigorous proofs, and deep conceptual understanding."
 
 system_prompt = get_system_prompt(grade)
 

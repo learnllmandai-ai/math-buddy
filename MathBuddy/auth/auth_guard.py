@@ -4,6 +4,8 @@ import streamlit as st
 def initialize_auth():
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
+    if "auth_user" not in st.session_state:
+        st.session_state["auth_user"] = ""
 
 
 def login_screen():
@@ -19,16 +21,27 @@ def login_screen():
         unsafe_allow_html=True,
     )
 
-    col1, col2, col3 = st.columns([1, 2, 1])
+    st.caption("Sign in to continue to MathBuddy.")
 
-    with col2:
-        if st.button("🔵 Sign in with Google", use_container_width=True):
-            st.session_state["authenticated"] = True
+    email = st.text_input("Email", placeholder="student@example.com")
+    password = st.text_input("Password", type="password", placeholder="Enter any password")
 
-        if st.button("🟦 Sign in with Microsoft", use_container_width=True):
+    if st.button("Sign in", use_container_width=True):
+        if email.strip() and password.strip():
             st.session_state["authenticated"] = True
+            st.session_state["auth_user"] = email.strip()
+            st.rerun()
+        else:
+            st.warning("Please enter both email and password to sign in.")
+
+    st.info("Demo login is enabled. Any non-empty email and password will sign you in.")
+
+
+def logout():
+    st.session_state["authenticated"] = False
+    st.session_state["auth_user"] = ""
 
 
 def require_authentication() -> bool:
-    """Placeholder authentication guard."""
-    return True
+    """Return whether the current session is authenticated."""
+    return bool(st.session_state.get("authenticated", False))

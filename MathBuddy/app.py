@@ -1,11 +1,14 @@
 import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from analytics.mastery_tracker import compute_mastery, update_topic_mastery
 from analytics.progress_tracker import summarize_progress
 from analytics.reports import generate_report
 from analytics.telemetry import log_interaction
-from auth.auth_guard import initialize_auth, login_screen
+from auth.auth_guard import initialize_auth, login_screen, logout, require_authentication
 from gamification.badge_engine import earned_badges
 from gamification.streak_tracker import current_streak, update_streak
 from gamification.xp_manager import award_xp, total_xp
@@ -18,7 +21,7 @@ from tutoring.tutor_chain import build_chain
 
 initialize_auth()
 
-if not st.session_state["authenticated"]:
+if not require_authentication():
     login_screen()
     st.stop()
 
@@ -32,6 +35,11 @@ if "mastery_scores" not in st.session_state:
     st.session_state["mastery_scores"] = {}
 
 st.title("🧮 MathBuddy")
+if st.sidebar.button("Sign out"):
+    logout()
+    st.rerun()
+
+st.caption(f"Signed in as: {st.session_state.get('auth_user', 'Student')}")
 
 language = st.sidebar.selectbox("Language", ["English", "தமிழ்"])
 
@@ -78,9 +86,15 @@ if student_question:
             1,
         )
 
-        chain = build_chain(grade)
-        response = chain.invoke({"question": student_question})
-        explanation = response.content
+        try:
+            chain = build_chain(grade)
+            response = chain.invoke({"question": student_question})
+            explanation = response.content
+        except Exception as exc:
+            st.error("Unable to start the Gemini tutor right now.")
+            st.info("Create or update your .env file with GEMINI_API_KEY=... and restart the app.")
+            st.exception(exc)
+            st.stop()
         if language == "தமிழ்":
             explanation = translate_text(explanation, "ta")
 

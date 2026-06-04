@@ -1,7 +1,0 @@
-streamlit
-google-genai
-langchain-core
-langchain-community
-python-dotenv
-requests
-pandas

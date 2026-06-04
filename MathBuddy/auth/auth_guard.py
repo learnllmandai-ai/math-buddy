@@ -1,4 +1,7 @@
 import streamlit as st
+import os
+import requests
+import urllib.parse
 
 
 def initialize_auth():
@@ -6,6 +9,8 @@ def initialize_auth():
         st.session_state["authenticated"] = False
     if "auth_user" not in st.session_state:
         st.session_state["auth_user"] = ""
+    if "user_profile" not in st.session_state:
+        st.session_state["user_profile"] = {}
 
 
 def login_screen():
@@ -23,23 +28,74 @@ def login_screen():
 
     st.caption("Sign in to continue to MathBuddy.")
 
-    email = st.text_input("Email", placeholder="student@example.com")
-    password = st.text_input("Password", type="password", placeholder="Enter any password")
+    google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+    redirect_uri = os.getenv("REDIRECT_URI") or "http://localhost:8501"
 
-    if st.button("Sign in", use_container_width=True):
-        if email.strip() and password.strip():
+    if not google_client_id:
+        st.error("Google Client ID is not configured. Please set GOOGLE_CLIENT_ID in your .env file.")
+        st.stop()
+
+    if "code" not in st.query_params:
+        params = {
+            "client_id": google_client_id,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": "openid email profile",
+        }
+        auth_url = f"https://accounts.google.com/o/oauth2/auth?{urllib.parse.urlencode(params)}"
+        st.link_button("Sign in with Google", auth_url, use_container_width=True)
+    else:
+        try:
+            code = st.query_params["code"]
+            google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+
+            if not google_client_secret:
+                st.error("Google Client Secret is not configured. Please set GOOGLE_CLIENT_SECRET in your .env file.")
+                st.stop()
+
+            token_url = "https://oauth2.googleapis.com/token"
+            token_payload = {
+                "code": code,
+                "client_id": google_client_id,
+                "client_secret": google_client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            }
+            token_response = requests.post(token_url, data=token_payload)
+            token_response.raise_for_status()
+            tokens = token_response.json()
+            access_token = tokens["access_token"]
+
+            userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+            userinfo_response = requests.get(userinfo_url, headers={
+                "Authorization": f"Bearer {access_token}"
+            })
+            userinfo_response.raise_for_status()
+            user_profile = userinfo_response.json()
+
             st.session_state["authenticated"] = True
-            st.session_state["auth_user"] = email.strip()
+            st.session_state["auth_user"] = user_profile.get("email", "Unknown User")
+            st.session_state["user_profile"] = {
+                "name": user_profile.get("name", ""),
+                "email": user_profile.get("email", ""),
+                "picture": user_profile.get("picture", ""),
+            }
+            st.query_params.clear()
             st.rerun()
-        else:
-            st.warning("Please enter both email and password to sign in.")
 
-    st.info("Demo login is enabled. Any non-empty email and password will sign you in.")
+        except requests.exceptions.RequestException as e:
+            st.error(f"Authentication error: {e}. Please try again.")
+            st.session_state["authenticated"] = False
+            st.session_state["auth_user"] = ""
+            st.session_state["user_profile"] = {}
+            st.query_params.clear()
 
 
 def logout():
     st.session_state["authenticated"] = False
     st.session_state["auth_user"] = ""
+    st.session_state["user_profile"] = {}
+    st.rerun()
 
 
 def require_authentication() -> bool:

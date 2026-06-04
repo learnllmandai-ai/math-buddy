@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+st.set_page_config(page_title="MathBuddy", layout="wide")
+
 from analytics.mastery_tracker import compute_mastery, update_topic_mastery
 from analytics.progress_tracker import summarize_progress
 from analytics.reports import generate_report
@@ -25,8 +27,6 @@ if not require_authentication():
     login_screen()
     st.stop()
 
-st.set_page_config(page_title="MathBuddy", layout="wide")
-
 if "xp_total" not in st.session_state:
     st.session_state["xp_total"] = 0
 if "streak_days" not in st.session_state:
@@ -35,11 +35,19 @@ if "mastery_scores" not in st.session_state:
     st.session_state["mastery_scores"] = {}
 
 st.title("🧮 MathBuddy")
-if st.sidebar.button("Sign out"):
-    logout()
-    st.rerun()
 
-st.caption(f"Signed in as: {st.session_state.get('auth_user', 'Student')}")
+# Display user profile if authenticated
+if st.session_state.get("authenticated") and st.session_state.get("user_profile"):
+    user_profile = st.session_state["user_profile"]
+    if user_profile.get("picture"):
+        st.sidebar.image(user_profile["picture"], width=60)
+    st.sidebar.write(f"Welcome, {user_profile.get('name', '').split(' ')[0]}!")
+    if st.sidebar.button("Sign out"):
+        logout()
+        st.rerun()
+
+# Existing sign-in info moved to the auth_guard
+# st.caption(f"Signed in as: {st.session_state.get('auth_user', 'Student')}")
 
 language = st.sidebar.selectbox("Language", ["English", "தமிழ்"])
 

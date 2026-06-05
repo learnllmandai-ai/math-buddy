@@ -1,10 +1,146 @@
+import os
+import time
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
 st.set_page_config(page_title="MathBuddy", layout="wide")
+
+# --- Pre-loader Implementation ---
+if "preloader_run" not in st.session_state:
+    st.markdown("""
+        <style>
+            /* Hide Streamlit elements during loading */
+            [data-testid="stSidebar"], section[data-testid="stSidebarNav"], .stAppHeader {
+                display: none !important;
+            }
+            
+            .loader-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: linear-gradient(-45deg, #4F46E5, #3B82F6, #10B981, #6366F1);
+                background-size: 400% 400%;
+                animation: gradientBG 10s ease infinite;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 999999;
+                overflow: hidden;
+                font-family: 'Inter', sans-serif;
+            }
+
+            @keyframes gradientBG {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+
+            .glass-card {
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 24px;
+                padding: 50px;
+                text-align: center;
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+                width: 400px;
+                position: relative;
+                z-index: 10;
+            }
+
+            .main-icon {
+                font-size: 80px;
+                margin-bottom: 20px;
+                display: inline-block;
+                animation: pulse 2s ease-in-out infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255,255,255,0.4)); }
+                50% { transform: scale(1.1); filter: drop-shadow(0 0 25px rgba(255,255,255,0.7)); }
+            }
+
+            .progress-bar-container {
+                width: 100%;
+                height: 8px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                margin: 25px 0;
+                overflow: hidden;
+            }
+
+            .progress-fill {
+                height: 100%;
+                width: 0%;
+                background: #FFFFFF;
+                box-shadow: 0 0 15px #FFFFFF;
+                border-radius: 10px;
+                animation: loadProgress 3.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            @keyframes loadProgress {
+                0% { width: 0%; }
+                100% { width: 100%; }
+            }
+
+            .status-text {
+                color: white;
+                font-weight: 500;
+                font-size: 16px;
+                height: 20px;
+            }
+
+            .status-text::after {
+                content: "";
+                animation: rotatePhrases 3.5s infinite;
+            }
+
+            @keyframes rotatePhrases {
+                0%, 30% { content: "🤖 Calling MathBuddy to the board..."; }
+                31%, 65% { content: "✏️ Sharpening the virtual pencils..."; }
+                66%, 100% { content: "💡 Pre-solving equations step-by-step..."; }
+            }
+
+            .math-particle {
+                position: absolute;
+                color: rgba(255, 255, 255, 0.3);
+                font-size: 24px;
+                user-select: none;
+                pointer-events: none;
+                animation: floatUp 4s infinite linear;
+            }
+
+            @keyframes floatUp {
+                0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+                20% { opacity: 0.6; }
+                80% { opacity: 0.6; }
+                100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+            }
+        </style>
+        <div class="loader-container">
+            <div class="math-particle" style="left:10%; animation-delay:0s;">+</div>
+            <div class="math-particle" style="left:30%; animation-delay:1s;">÷</div>
+            <div class="math-particle" style="left:50%; animation-delay:2s;">π</div>
+            <div class="math-particle" style="left:70%; animation-delay:0.5s;">√</div>
+            <div class="math-particle" style="left:90%; animation-delay:1.5s;">×</div>
+            <div class="glass-card">
+                <div class="main-icon">♾️</div>
+                <div class="progress-bar-container"><div class="progress-fill"></div></div>
+                <div class="status-text"></div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    time.sleep(3.5)
+    st.session_state["preloader_run"] = True
+    st.rerun()
 
 from analytics.mastery_tracker import compute_mastery, update_topic_mastery
 from analytics.progress_tracker import summarize_progress
@@ -20,6 +156,9 @@ from tutoring.adaptive_engine import build_difficulty_rules, determine_difficult
 from tutoring.misconception_detector import detect_misconception
 from tutoring.pedagogy_engine import enforce_pedagogy
 from tutoring.tutor_chain import build_chain
+
+# Initialize the modern Google GenAI Client
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 initialize_auth()
 
@@ -109,6 +248,26 @@ if student_question:
         st.caption(f"Difficulty: {difficulty} | {difficulty_rules}")
         st.caption(f"Misconception hint: {misconception['misconception']}")
         st.chat_message("assistant").write(explanation)
+
+        if st.button("🔊 Listen to Lesson (Gemini)", key="tts_latest"):
+            with st.spinner("Generating voice readback..."):
+                try:
+                    # Request Gemini to return the text spoken aloud as an audio file
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=f"Read the following educational math explanation out loud clearly and naturally. Do not say things like 'asterisk' or read raw symbols out loud, just speak naturally like a tutor: {explanation}",
+                        config=types.GenerateContentConfig(
+                            # Instruct the model to return raw audio bytes instead of text
+                            response_mime_type="audio/mp3"
+                        ),
+                    )
+                    
+                    # Extract and play the raw audio part bytes natively in Streamlit
+                    for part in response.candidates[0].content.parts:
+                        if part.inline_data:
+                            st.audio(part.inline_data.data, format="audio/mp3", autoplay=True)
+                except Exception as e:
+                    st.error(f"Gemini Audio failed: {str(e)}")
 
         st.sidebar.metric("XP", st.session_state["xp_total"])
         st.sidebar.metric("🔥 Streak", current_streak(st.session_state))

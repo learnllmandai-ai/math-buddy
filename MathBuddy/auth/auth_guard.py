@@ -92,9 +92,8 @@ def login_screen():
 
 
 def logout():
-    st.session_state["authenticated"] = False
-    st.session_state["auth_user"] = ""
-    st.session_state["user_profile"] = {}
+    st.session_state.clear()
+    initialize_auth()
     st.rerun()
 
 

@@ -1,10 +1,18 @@
+import base64
+import hashlib
 import os
 import time
+
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+
+try:
+    from openai import OpenAI
+except Exception:  # pragma: no cover - optional dependency
+    OpenAI = None
 
 load_dotenv()
 
@@ -160,6 +168,86 @@ from tutoring.tutor_chain import build_chain
 # Initialize the modern Google GenAI Client
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
+
+def initials_from_name(name: str) -> str:
+    parts = [part for part in str(name).split() if part]
+    if len(parts) >= 2:
+        return (parts[0][0] + parts[-1][0]).upper()
+    return parts[0][:2].upper() if parts else "ST"
+
+
+def avatar_palette(name: str):
+    digest = hashlib.md5(str(name).encode("utf-8")).hexdigest()
+    palette = [
+        ("#6366F1", "#22D3EE"),
+        ("#8B5CF6", "#EC4899"),
+        ("#10B981", "#22C55E"),
+        ("#F59E0B", "#FB7185"),
+        ("#0EA5E9", "#6366F1"),
+    ]
+    return palette[int(digest[:2], 16) % len(palette)]
+
+
+def base64_image_data_uri(uploaded_file) -> str:
+    image_bytes = uploaded_file.getvalue() if hasattr(uploaded_file, "getvalue") else b""
+    if not image_bytes:
+        raise ValueError("The uploaded image buffer is empty.")
+    mime_type = getattr(uploaded_file, "type", "") or "image/png"
+    return f"data:{mime_type};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
+
+
+def run_vision_test(uploaded_file, grade: str) -> str:
+    if uploaded_file is None:
+        return "Please upload a handwritten formula image first."
+
+    try:
+        image_bytes = uploaded_file.getvalue()
+        if not image_bytes:
+            return "The image buffer is empty. Please try another capture or upload."
+
+        image_uri = base64_image_data_uri(uploaded_file)
+        prompt = (
+            "You are MathBuddy's multimodal vision tutor. Parse the handwritten formula in the image "
+            "and print the detected formula in exact single-dollar LaTeX formatting ($...$). "
+            "Then provide a patient, step-by-step tutoring explanation for the student in the chat. "
+            "Be concise, encouraging, and use plain language for the selected grade band "
+            f"({grade})."
+        )
+
+        openai_key = os.environ.get("OPENAI_API_KEY")
+        if OpenAI is not None and openai_key:
+            try:
+                openai_client = OpenAI(api_key=openai_key)
+                response = openai_client.responses.create(
+                    model="gpt-4o",
+                    input=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "input_text", "text": prompt},
+                                {"type": "input_image", "image_url": image_uri},
+                            ],
+                        }
+                    ],
+                )
+                return getattr(response, "output_text", None) or "Vision analysis completed."
+            except Exception:
+                pass
+
+        mime_type = getattr(uploaded_file, "type", "") or "image/png"
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                prompt,
+            ],
+            config=types.GenerateContentConfig(temperature=0.2),
+        )
+        return getattr(response, "text", "") or "Vision analysis completed."
+    except Exception as exc:
+        return f"Vision test failed: {exc}"
+
+
 initialize_auth()
 
 if not require_authentication():
@@ -172,18 +260,54 @@ if "streak_days" not in st.session_state:
     st.session_state["streak_days"] = 0
 if "mastery_scores" not in st.session_state:
     st.session_state["mastery_scores"] = {}
+if "profile_pic" not in st.session_state:
+    st.session_state["profile_pic"] = "car_profile.png"
 
 st.title("🧮 MathBuddy")
 
 # Display user profile if authenticated
 if st.session_state.get("authenticated") and st.session_state.get("user_profile"):
     user_profile = st.session_state["user_profile"]
-    if user_profile.get("picture"):
-        st.sidebar.image(user_profile["picture"], width=60)
-    st.sidebar.write(f"Welcome, {user_profile.get('name', '').split(' ')[0]}!")
-    if st.sidebar.button("Sign out"):
+    profile_name = user_profile.get("name", "Student")
+    profile_picture = user_profile.get("picture", "")
+    initials = initials_from_name(profile_name)
+    start_color, end_color = avatar_palette(profile_name)
+
+    custom_profile_pic = st.session_state.get("profile_pic")
+    if custom_profile_pic and os.path.exists(custom_profile_pic):
+        # Render custom image profile header
+        col_img, col_txt = st.sidebar.columns([1, 2])
+        with col_img:
+            st.image(custom_profile_pic, width=100)
+        with col_txt:
+            st.markdown(
+                f"""
+                <div style="padding-top:10px;">
+                  <div style="font-size:0.98rem; font-weight:700; color:#eff6ff;">{profile_name}</div>
+                  <div style="font-size:0.82rem; color:#bfdbfe;">MathBuddy learner</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
+        # Fallback to initials badge
+        st.sidebar.markdown(
+            f"""
+            <div style="position:sticky; top:0; z-index:10; padding:10px 4px 14px 4px; background:linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.86)); border-bottom:1px solid rgba(148,163,184,0.18); margin-bottom:10px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:1rem; border:2px solid rgba(255,255,255,0.25); background:linear-gradient(135deg, {start_color}, {end_color}); box-shadow: 0 10px 24px rgba(99,102,241,0.35);">{initials}</div>
+                <div>
+                  <div style="font-size:0.98rem; font-weight:700; color:#eff6ff;">{profile_name}</div>
+                  <div style="font-size:0.82rem; color:#bfdbfe;">MathBuddy learner</div>
+                </div>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if st.sidebar.button("Logout", key="sidebar_logout"):
         logout()
-        st.rerun()
 
 # Existing sign-in info moved to the auth_guard
 # st.caption(f"Signed in as: {st.session_state.get('auth_user', 'Student')}")
@@ -194,6 +318,21 @@ grade = st.sidebar.selectbox(
     "Select Grade",
     ["Grades 1-5", "Grades 6-8", "Grades 9-12"],
 )
+
+with st.expander("📷 Snap & Solve a Handwritten Formula", expanded=True):
+    uploaded_formula = st.file_uploader(
+        "Upload or capture a handwritten formula", type=["png", "jpg", "jpeg", "webp"]
+    )
+    if uploaded_formula is not None:
+        st.image(uploaded_formula, caption="Handwritten formula preview", use_container_width=True)
+        image_bytes = uploaded_formula.getvalue()
+        st.caption(f"Image buffer bytes: {len(image_bytes)}")
+
+    if st.button("Run Vision Test Loop", key="vision_test_loop"):
+        with st.spinner("Inspecting the handwriting with the multimodal vision tutor..."):
+            explanation = run_vision_test(uploaded_formula, grade)
+            st.chat_message("assistant").write(explanation)
+            st.rerun()
 
 progress_summary = summarize_progress()
 mastery = st.session_state["mastery_scores"]

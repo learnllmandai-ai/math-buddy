@@ -8,10 +8,14 @@ This file summarizes the current implementation in `app.py` and the expanded roa
 
 1. The app loads environment variables from `.env` and validates `GEMINI_API_KEY`.
 2. It sets up a Google Gemini client with `genai.Client(api_key=...)`.
-3. The user must sign in through Google or Microsoft OAuth before the tutor dashboard is shown.
-4. Once authenticated, the app loads or creates lesson progress in `progress_data.json`.
-5. The tutor uses a grade-aware system prompt and sends chat or image queries to Gemini.
-6. The app keeps chat history in `StreamlitChatMessageHistory` so the conversation feels continuous.
+3. **Pre-loader:** A high-quality CSS/HTML animation initializes the "ABACUS ELITE" branding.
+4. **Authentication:** The user must sign in through Google or Microsoft OAuth.
+5. **Dashboard:**
+   - **Interactive Abacus:** A custom CSS-driven Soroban abacus for manual practice.
+   - **Adaptive Tutoring:** Uses a mastery-based engine to adjust difficulty and detect misconceptions.
+   - **Multimodal Input:** Supports text chat and "Snap & Solve" vision for handwritten formulas.
+   - **Native Voice:** Gemini-powered TTS for auditory learning.
+6. **Persistence:** Chat history and session stats (XP, Streaks) are maintained in `st.session_state`.
 
 ---
 
@@ -69,16 +73,17 @@ The helper functions in `app.py` are:
 - `send_image_query_to_llm(image_bytes, mime_type, messages, system_prompt)` — handles uploaded or camera-captured formulas
 
 ### Grade-aware tutoring logic
-The prompt is built dynamically with `get_system_prompt(grade_level)`, which switches behavior based on:
+The system uses `tutoring/tutor_chain.py` to build LangChain-based reasoning chains, switching behavior based on:
 - Primary (Grades 1–5)
 - Middle School (Grades 6–8)
 - High School (Grades 9–12)
 
-The system prompt instructs the model to:
-- be patient and encouraging
-- never reveal the final answer immediately
-- ask one guiding question first
-- use LaTeX-style math formatting with single dollar signs
+### Advanced Features
+1. **Pedagogy Enforcement:** Intercepts student requests for "just the answer" to encourage step-by-step thinking.
+2. **Mastery Analytics:** Implements an Exponential Moving Average (EMA) to track progress across topics like Algebra, Geometry, and Fractions.
+3. **Misconception Detection:** Scans user input for specific error patterns to provide targeted hints.
+4. **Gamification:** Integrated XP, Streaks, and Badges to drive student retention.
+5. **Multilingual Support:** Dynamic translation for Tamil (தமிழ்) and English.
 
 ### Progress tracking
 The sidebar lets the user:

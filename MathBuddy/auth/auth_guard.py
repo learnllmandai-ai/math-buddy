@@ -11,6 +11,10 @@ def initialize_auth():
         st.session_state["auth_user"] = ""
     if "user_profile" not in st.session_state:
         st.session_state["user_profile"] = {}
+    if "student_id" not in st.session_state:
+        st.session_state["student_id"] = ""
+    if "last_login" not in st.session_state:
+        st.session_state["last_login"] = ""
 
 
 def login_screen():

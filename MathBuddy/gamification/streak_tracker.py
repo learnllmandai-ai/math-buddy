@@ -1,4 +1,5 @@
 """Daily streak tracking helpers."""
+from datetime import date
 
 
 def current_streak(session_state: dict) -> int:
@@ -8,7 +9,15 @@ def current_streak(session_state: dict) -> int:
 
 def update_streak(session_state: dict, student_id: str, last_login: str) -> dict:
     """Store simple streak info in session state."""
-    session_state["student_id"] = student_id
-    session_state["last_login"] = last_login
-    session_state["streak_days"] = int(session_state.get("streak_days", 0)) + 1
-    return session_state
+    updated_state = dict(session_state)
+    updated_state["student_id"] = student_id
+    updated_state["last_login"] = last_login
+
+    today = str(date.today())
+    prev_date = updated_state.get("last_streak_date")
+
+    if prev_date != today:
+        updated_state["streak_days"] = int(updated_state.get("streak_days", 0)) + 1
+        updated_state["last_streak_date"] = today
+
+    return updated_state

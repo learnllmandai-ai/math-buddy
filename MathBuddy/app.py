@@ -2,12 +2,14 @@ import base64
 import hashlib
 import os
 import time
+from datetime import date
 
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from langchain_core.messages import HumanMessage, AIMessage
 
 try:
     from openai import OpenAI
@@ -16,7 +18,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 load_dotenv()
 
-st.set_page_config(page_title="MathBuddy", layout="wide")
+st.set_page_config(page_title="ABACUS ELITE", layout="wide")
 
 # --- Pre-loader Implementation ---
 if "preloader_run" not in st.session_state:
@@ -33,7 +35,7 @@ if "preloader_run" not in st.session_state:
                 left: 0;
                 width: 100vw;
                 height: 100vh;
-                background: linear-gradient(-45deg, #4F46E5, #3B82F6, #10B981, #6366F1);
+                background: linear-gradient(-45deg, #1E1B4B, #2D1B69, #10B981, #0F172A);
                 background-size: 400% 400%;
                 animation: gradientBG 10s ease infinite;
                 display: flex;
@@ -65,7 +67,7 @@ if "preloader_run" not in st.session_state:
             }
 
             .main-icon {
-                font-size: 80px;
+                font-size: 90px;
                 margin-bottom: 20px;
                 display: inline-block;
                 animation: pulse 2s ease-in-out infinite;
@@ -112,9 +114,9 @@ if "preloader_run" not in st.session_state:
             }
 
             @keyframes rotatePhrases {
-                0%, 30% { content: "🤖 Calling MathBuddy to the board..."; }
-                31%, 65% { content: "✏️ Sharpening the virtual pencils..."; }
-                66%, 100% { content: "💡 Pre-solving equations step-by-step..."; }
+                0%, 30% { content: "🧮 Initializing ABACUS ELITE..."; }
+                31%, 65% { content: "💎 Calibrating Soroban beads..."; }
+                66%, 100% { content: "📈 Loading progress analytics..."; }
             }
 
             .math-particle {
@@ -140,7 +142,7 @@ if "preloader_run" not in st.session_state:
             <div class="math-particle" style="left:70%; animation-delay:0.5s;">√</div>
             <div class="math-particle" style="left:90%; animation-delay:1.5s;">×</div>
             <div class="glass-card">
-                <div class="main-icon">♾️</div>
+                <div class="main-icon">🧮</div>
                 <div class="progress-bar-container"><div class="progress-fill"></div></div>
                 <div class="status-text"></div>
             </div>
@@ -210,8 +212,11 @@ def run_vision_test(uploaded_file, grade: str) -> str:
             "You are MathBuddy's multimodal vision tutor. Parse the handwritten formula in the image "
             "and print the detected formula in exact single-dollar LaTeX formatting ($...$). "
             "Then provide a patient, step-by-step tutoring explanation for the student in the chat. "
-            "Be concise, encouraging, and use plain language for the selected grade band "
-            f"({grade})."
+            f"Be concise, encouraging, and use plain language for the selected grade band ({grade}).\n\n"
+            "Adhere to these generation priorities:\n"
+            "- Quality: Ensure high-quality, accurate parsing and clear, easy-to-understand explanations.\n"
+            "- Diversity: Vary reasoning styles and examples to avoid repetition and bias.\n"
+            "- Speed: Keep the response fast for a real-time interactive experience."
         )
 
         openai_key = os.environ.get("OPENAI_API_KEY")
@@ -248,6 +253,82 @@ def run_vision_test(uploaded_file, grade: str) -> str:
         return f"Vision test failed: {exc}"
 
 
+# --- Global Styling ---
+st.markdown("""
+    <style>
+        .stApp {
+            background-color: #0F172A;
+            color: #E2E8F0;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #1E1B4B !important;
+            border-right: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .abacus-container {
+            background: #1E1B4B;
+            border: 3px solid #2D1B69;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+        }
+        .abacus-rod {
+            width: 8px;
+            height: 180px;
+            background: #2D1B69;
+            margin: 0 15px;
+            border-radius: 4px;
+            position: relative;
+        }
+        .bead {
+            width: 32px;
+            height: 22px;
+            border-radius: 11px;
+            position: absolute;
+            left: -12px;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
+        }
+        .bead-upper { background: rgba(255, 255, 255, 0.9); top: 10px; }
+        .bead-lower { background: #10B981; box-shadow: 0 0 10px #10B981; }
+        
+        /* Interaction Logic */
+        .bead-input { display: none; }
+        /* When upper bead is checked, it moves down */
+        .bead-input:checked + .bead-upper { transform: translateY(35px); }
+        /* When lower beads are checked, they move up */
+        .bead-input:checked + .bead-lower { transform: translateY(-35px); }
+        
+        .bead:hover { filter: brightness(1.2); }
+
+        .glow-circle {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse-glow 3s infinite;
+            animation: pulse-glow 4s infinite;
+        }
+        @keyframes pulse-glow {
+            0% { transform: scale(0.8); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.6; }
+            100% { transform: scale(0.8); opacity: 0.3; }
+        }
+        .quiz-panel {
+            background: rgba(30, 27, 75, 0.5);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 initialize_auth()
 
 if not require_authentication():
@@ -262,8 +343,37 @@ if "mastery_scores" not in st.session_state:
     st.session_state["mastery_scores"] = {}
 if "profile_pic" not in st.session_state:
     st.session_state["profile_pic"] = "car_profile.png"
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "session_stats" not in st.session_state:
+    st.session_state["session_stats"] = {"questions": 0, "total_time": 0.0}
+if "daily_goal" not in st.session_state:
+    st.session_state["daily_goal"] = 5
 
-st.title("🧮 MathBuddy")
+
+# --- Sidebar: Dashboard ---
+with st.sidebar:
+    st.markdown("<h1 style='color:#10B981; font-size:2rem; margin-bottom:0;'>ABACUS ELITE</h1>", unsafe_allow_html=True)
+    st.caption("Advanced Soroban Learning")
+    
+    st.markdown("### 📊 Dashboard")
+    st.button("🏠 Dashboard", use_container_width=True)
+    st.button("📈 Progress", use_container_width=True)
+    st.button("📉 Trend Charts", use_container_width=True)
+
+    st.markdown("---")
+    st.markdown("#### Progress Charts")
+    chart_data = pd.DataFrame({'Accuracy': [30, 45, 40, 70, 85, 80, 95]})
+    st.line_chart(chart_data, height=100)
+    
+    st.markdown("#### Trend Analysis")
+    trend_data = pd.DataFrame({'Speed': [10, 8, 9, 6, 5, 4, 3]})
+    st.line_chart(trend_data, height=100)
+
+    st.markdown("---")
+    language = st.selectbox("Language", ["English", "தமிழ்"])
+    grade = st.selectbox("Grade", ["Grades 1-5", "Grades 6-8", "Grades 9-12"])
+
 
 # Display user profile if authenticated
 if st.session_state.get("authenticated") and st.session_state.get("user_profile"):
@@ -312,14 +422,123 @@ if st.session_state.get("authenticated") and st.session_state.get("user_profile"
 # Existing sign-in info moved to the auth_guard
 # st.caption(f"Signed in as: {st.session_state.get('auth_user', 'Student')}")
 
-language = st.sidebar.selectbox("Language", ["English", "தமிழ்"])
-
-grade = st.sidebar.selectbox(
-    "Select Grade",
-    ["Grades 1-5", "Grades 6-8", "Grades 9-12"],
+st.sidebar.markdown(
+    """
+    <div style="
+        margin-top:10px;
+        padding:10px 12px;
+        border-radius:14px;
+        background:linear-gradient(135deg, rgba(99,102,241,0.12), rgba(16,185,129,0.12));
+        border:1px solid rgba(148,163,184,0.22);
+        color:#e5eefb;
+        font-size:0.92rem;
+    ">
+      <div style="font-weight:700; margin-bottom:6px;">✨ Generation Focus</div>
+      <ul style="padding-left:16px; margin:0;">
+        <li><b>Quality:</b> High-quality generation outputs (clear and accurate).</li>
+        <li><b>Diversity:</b> Capturing varied modes to reduce bias.</li>
+        <li><b>Speed:</b> Fast generation for real-time interaction.</li>
+      </ul>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
-with st.expander("📷 Snap & Solve a Handwritten Formula", expanded=True):
+# --- Session Progress & Goal ---
+st.sidebar.markdown("---")
+st.sidebar.subheader("🎯 Session Goal")
+progress = min(st.session_state["session_stats"]["questions"] / st.session_state["daily_goal"], 1.0)
+st.sidebar.progress(progress)
+st.sidebar.caption(f"{st.session_state['session_stats']['questions']} / {st.session_state['daily_goal']} questions answered today")
+
+if st.session_state["session_stats"]["questions"] > 0:
+    avg_speed = st.session_state["session_stats"]["total_time"] / st.session_state["session_stats"]["questions"]
+    st.sidebar.markdown(
+        f"""
+        <div style="font-size:0.8rem; color:#94a3b8; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
+          ⚡ <b>Avg. Speed:</b> {avg_speed:.2f}s per response
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+if st.sidebar.button("Clear Chat Context", use_container_width=True):
+    st.session_state.messages = []
+    st.session_state["session_stats"] = {"questions": 0, "total_time": 0.0}
+    st.rerun()
+
+
+# --- Main Content Area ---
+col_practice, col_quiz = st.columns([2, 1], gap="large")
+
+with col_practice:
+    st.markdown("<h2 style='color:#E2E8F0;'>PRACTICE MODE</h2>", unsafe_allow_html=True)
+    
+    # Generate Interactive Abacus HTML
+    rods_html = ""
+    for r in range(7):
+        # Rod Container
+        rod_content = f'<div class="abacus-rod">'
+        # Upper Bead (1 per rod)
+        rod_content += f'<input type="checkbox" id="r{r}u" class="bead-input"><label for="r{r}u" class="bead bead-upper"></label>'
+        # Lower Beads (4 per rod for standard Soroban)
+        for b in range(4):
+            bottom_pos = 10 + (b * 25)
+            bead_id = f"r{r}l{b}"
+            rod_content += f'<input type="checkbox" id="{bead_id}" class="bead-input"><label for="{bead_id}" class="bead bead-lower" style="bottom:{bottom_pos}px"></label>'
+        
+        rod_content += '</div>'
+        rods_html += rod_content
+
+    # Animated Abacus Representation
+    st.markdown(f"""
+        <div class="abacus-container">
+            <div class="glow-circle"></div>
+            {"".join(['<div class="abacus-rod"><div class="bead bead-upper"></div><div class="bead bead-lower" style="bottom:10px"></div><div class="bead bead-lower" style="bottom:40px"></div><div class="bead bead-lower" style="bottom:70px"></div></div>' for _ in range(7)])}
+            {rods_html}
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.button("✨ Start Practice Mode", use_container_width=True, type="primary")
+    
+    # Tutor Chat Interface
+    st.markdown("---")
+    st.caption("AI Tutor Active: Ask anything about your calculation steps.")
+    
+    # --- Chat History Rendering ---
+    for msg in st.session_state.messages:
+        role = "user" if isinstance(msg, HumanMessage) else "assistant"
+        st.chat_message(role).write(msg.content)
+
+with col_quiz:
+    st.markdown("<h2 style='color:#E2E8F0;'>QUIZ MODE</h2>", unsafe_allow_html=True)
+    
+    with st.container(border=True):
+        st.markdown("""
+            <div class="quiz-panel">
+                <p style="color:#94a3b8; font-size:0.9rem;">Current Challenge</p>
+                <h1 style="font-size:3.5rem; margin:10px 0; color:white;">34 + 57 = ?</h1>
+                <hr style="opacity:0.1">
+                <p style="color:#94a3b8; font-size:0.9rem;">Countdown</p>
+                <h2 style="font-family:monospace; font-size:2rem; color:#10B981;">00:02:48</h2>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st.button("🚀 Take Quiz Now", use_container_width=True)
+
+    st.markdown("---")
+    # Stats & Gamification
+    st.subheader("Achievements")
+    s_col1, s_col2 = st.columns(2)
+    s_col1.metric("XP", st.session_state["xp_total"])
+    s_col2.metric("🔥 Streak", current_streak(st.session_state))
+    
+    st.markdown("**Earned Badges:**")
+    st.write(earned_badges(st.session_state["xp_total"]))
+
+
+# Optional Vision Test (Moved to bottom or hidden)
+with st.expander("� Snap & Solve Worksheet"):
     uploaded_formula = st.file_uploader(
         "Upload or capture a handwritten formula", type=["png", "jpg", "jpeg", "webp"]
     )
@@ -328,24 +547,12 @@ with st.expander("📷 Snap & Solve a Handwritten Formula", expanded=True):
         image_bytes = uploaded_formula.getvalue()
         st.caption(f"Image buffer bytes: {len(image_bytes)}")
 
-    if st.button("Run Vision Test Loop", key="vision_test_loop"):
-        with st.spinner("Inspecting the handwriting with the multimodal vision tutor..."):
-            explanation = run_vision_test(uploaded_formula, grade)
-            st.chat_message("assistant").write(explanation)
-            st.rerun()
+mastery_scores = st.session_state.get("mastery_scores", {})
 
-progress_summary = summarize_progress()
-mastery = st.session_state["mastery_scores"]
-
-st.sidebar.metric("XP", st.session_state["xp_total"])
-st.sidebar.metric("🔥 Streak", current_streak(st.session_state))
-st.sidebar.write("Badges:", earned_badges(st.session_state["xp_total"]))
-
-if mastery:
-    st.sidebar.subheader("Mastery")
-    for topic, score in mastery.items():
-        st.sidebar.progress(score / 100)
-        st.sidebar.caption(f"{topic}: {score}%")
+if mastery_scores:
+    mastery_score = sum(mastery_scores.values()) / len(mastery_scores)
+else:
+    mastery_score = 0.0
 
 st.sidebar.caption(LANGUAGE_RULES.get(language, LANGUAGE_RULES["English"]))
 
@@ -353,18 +560,25 @@ student_question = st.chat_input("Ask a math question...")
 
 if student_question:
     log_interaction(grade, student_question)
+    st.chat_message("user").write(student_question)
+    st.session_state.messages.append(HumanMessage(content=student_question))
 
     override = enforce_pedagogy(student_question)
     if override:
         st.chat_message("assistant").write(override)
     else:
-        mastery_score = compute_mastery(1, 1)
         difficulty = determine_difficulty(mastery_score)
         difficulty_rules = build_difficulty_rules(mastery_score)
         misconception = detect_misconception(student_question)
 
         st.session_state["xp_total"] += award_xp(True)
-        st.session_state["streak_days"] = current_streak(st.session_state) + 1
+
+        st.session_state = update_streak(
+            st.session_state,
+            st.session_state.get("auth_user", ""),
+            str(date.today()),
+        )
+
         st.session_state["mastery_scores"] = update_topic_mastery(
             st.session_state["mastery_scores"],
             misconception["topic"],
@@ -373,9 +587,15 @@ if student_question:
         )
 
         try:
+            history = st.session_state.messages[:-1]
+            start_time = time.time()
             chain = build_chain(grade)
-            response = chain.invoke({"question": student_question})
+            response = chain.invoke({
+                "question": student_question,
+                "history": history
+            })
             explanation = response.content
+            duration = time.time() - start_time
         except Exception as exc:
             st.error("Unable to start the Gemini tutor right now.")
             st.info("Create or update your .env file with GEMINI_API_KEY=... and restart the app.")
@@ -384,8 +604,13 @@ if student_question:
         if language == "தமிழ்":
             explanation = translate_text(explanation, "ta")
 
+        st.session_state.messages.append(AIMessage(content=explanation))
+        st.session_state["session_stats"]["questions"] += 1
+        st.session_state["session_stats"]["total_time"] += duration
+
         st.caption(f"Difficulty: {difficulty} | {difficulty_rules}")
         st.caption(f"Misconception hint: {misconception['misconception']}")
+        st.caption(f"⚡ Response generated in {duration:.2f}s")
         st.chat_message("assistant").write(explanation)
 
         if st.button("🔊 Listen to Lesson (Gemini)", key="tts_latest"):
@@ -394,7 +619,7 @@ if student_question:
                     # Request Gemini to return the text spoken aloud as an audio file
                     response = client.models.generate_content(
                         model='gemini-2.5-flash',
-                        contents=f"Read the following educational math explanation out loud clearly and naturally. Do not say things like 'asterisk' or read raw symbols out loud, just speak naturally like a tutor: {explanation}",
+                        contents=f"Read the following math explanation with high-quality, clear, and natural speech. Avoid technical artifacts like reading raw symbols; speak like a patient human tutor: {explanation}",
                         config=types.GenerateContentConfig(
                             # Instruct the model to return raw audio bytes instead of text
                             response_mime_type="audio/mp3"
@@ -415,5 +640,5 @@ if student_question:
 if st.sidebar.button("Generate Report"):
     import pandas as pd
 
-    telemetry_df = pd.read_csv("data/telemetry.csv") if pd.io.common.file_exists("data/telemetry.csv") else pd.DataFrame()
+    telemetry_df = pd.read_csv("data/telemetry.csv") if os.path.exists("data/telemetry.csv") else pd.DataFrame()
     st.sidebar.json(generate_report("student", telemetry_df))
